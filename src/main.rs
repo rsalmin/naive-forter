@@ -2,6 +2,7 @@ use std::io;
 use std::io::prelude::*;
 use std::str;
 use std::rc::Rc;
+use std::str::SplitWhitespace;
 
 mod state;
 mod stack;
@@ -52,15 +53,15 @@ fn parse_num(str : &str) -> Option<u8> {
 
 fn interpret(state : &mut State, input_line: &str) {
 
-    let mut iter = input_line.split_whitespace();
+    let mut input_stream = input_line.split_whitespace();
 
     loop {
 
-        let part = next!( iter );     //break when None
+        let part = next!( input_stream);     //break when None
 
         if part == ":" {
-            let cmd_name = String::from( next!( iter ) );
-            let cmd_body :String  = iter.by_ref().take_while(|&x| x != ";").map(|x| format!("{} ", x) ).collect::<String>();
+            let cmd_name = String::from( next!( input_stream ) );
+            let cmd_body :String  = input_stream.by_ref().take_while(|&x| x != ";").map(|x| format!("{} ", x) ).collect::<String>();
             match compile(state, &cmd_body) {
                 Err( err ) => println!("{}", err),
                 Ok( cmd ) => state.dict.insert_closure(&cmd_name, cmd),
@@ -70,7 +71,7 @@ fn interpret(state : &mut State, input_line: &str) {
          }
 
         if let Some(cmd) = state.dict.get(part) {
-            cmd(state);
+            cmd(state, &mut input_stream);
             continue;
         }
 
@@ -100,16 +101,16 @@ fn compile(state : &State, input_line: &str) -> Result<Function, String> {
         }
 
         if let Some(n) = parse_num(part) {
-            code.push( Rc::new(Box::new( move |s : &mut State| s.stack.push(n) )) );
+            code.push( Rc::new(Box::new( move |s : &mut State, _i : &mut SplitWhitespace | s.stack.push(n) )) );
             continue;
         }
 
         return Err( format!("{} ?", part) );
     }
 
-    let cls = move |state : &mut State| {
+    let cls = move |state : &mut State, input : &mut SplitWhitespace | {
         for cmd in code.iter() {
-            cmd(state);
+            cmd(state, input);
         }
     };
     Ok( Rc::new(Box::new(cls)) )
