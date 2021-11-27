@@ -1,25 +1,34 @@
 use std::collections::HashMap;
-use crate::stack::Stack;
+use crate::state::State;
 use std::iter;
+use std::rc::Rc;
 
 pub struct Dict {
-    dict : HashMap<&'static str, fn(&mut Stack)>,
+    dict : HashMap<String, Rc<Box<dyn Fn(&mut State)>>>,
 }
 
 impl Dict {
     pub fn new() -> Dict {
-        let mut d = HashMap::<&'static str, fn(&mut Stack)>::new();
+        let mut d = Dict { dict : HashMap::<String, Rc<Box<dyn Fn(&mut State)>>>::new() };
 
-        d.insert("Hi", |_s : &mut Stack| println!("*") );
-        d.insert("Bro", |_s : &mut Stack| println!("+++") );
-        d.insert("SPACES", |s : &mut Stack| { let n = s.pop(); print!("{}", iter::repeat(' ').take(n.into()).collect::<String>() )} );
-        d.insert("EMIT", |s : &mut Stack| { let c = s.pop() as char; print!("{}", c); } );
+        d.insert_fn("Hi", |_s : &mut State| println!("*") );
+        d.insert_fn("Bro", |_s : &mut State| println!("+++") );
+        d.insert_fn("SPACES", |s : &mut State| { let n = s.stack.pop(); print!("{}", iter::repeat(' ').take(n.into()).collect::<String>() )} );
+        d.insert_fn("EMIT", |s : &mut State| { let c = s.stack.pop() as char; print!("{}", c); } );
 
-        Dict { dict : d }
+        d
     }
 
-    pub fn get(&self, key : &str) -> Option<&for<'r> fn(&'r mut Stack)> {
-        self.dict.get(key)
+    pub fn get(&self, key : &str) -> Option<Rc<Box<dyn Fn(&mut State)>>> {
+        self.dict.get(key).map(|x| x.clone())
+    }
+
+    pub fn insert_fn(&mut self, key : &str, f : fn(&mut State)) {
+        self.dict.insert(String::from(key), Rc::new(Box::new(f)));
+    }
+
+    pub fn insert_closure(&mut self, key : &str, f : Box<dyn Fn(&mut State)>) {
+        self.dict.insert(String::from(key), Rc::new(f));
     }
 }
 

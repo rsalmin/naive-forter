@@ -1,5 +1,6 @@
 use std::io;
 use std::io::prelude::*;
+use std::str;
 
 mod state;
 mod stack;
@@ -7,6 +8,15 @@ mod dict;
 
 use state::State;
 
+macro_rules! next {
+    ( $x:ident ) => {
+        {
+            let v : Option<&str> = $x.next();
+            if v.is_none() { break; }
+            v.unwrap()
+        }
+    }
+}
 
 fn main() -> io::Result<()> {
 
@@ -26,7 +36,7 @@ fn main() -> io::Result<()> {
             break;
         }
 
-        process(&mut state, &input_line);
+        interpret(&mut state, &input_line);
 
         input_line.clear();
     }
@@ -39,14 +49,28 @@ fn parse_num(str : &str) -> Option<u8> {
     str.parse::<u8>().ok()
 }
 
-fn process(state : &mut State, input_line : &str) {
+fn interpret(state : &mut State, input_line: &str) {
 
-    // let cmds : Vec<&str> = input_line.split_whitespace().collect();
+    let mut iter = input_line.split_whitespace();
 
-    for part in input_line.split_whitespace() {
+    loop {
 
-        if let Some(&cmd) = state.dict.get(part) {
-            cmd(&mut state.stack);
+        let part = next!( iter );     //break when None
+
+        if part == ":" {
+            let cmd_name = String::from( next!( iter ) );
+            let cmd_body :String  = iter.by_ref().take_while(|&x| x != ";").map(|x| format!("{} ", x) ).collect::<String>();
+
+            //let cmd = move |_s : &mut State| { println!("{}", cmd_body); };
+            let cmd = move |s : &mut State| { interpret(s, &cmd_body); };
+
+            state.dict.insert_closure(&cmd_name, Box::new(cmd));
+
+            continue;
+         }
+
+        if let Some(cmd) = state.dict.get(part) {
+            cmd(state);
             continue;
         }
 
@@ -55,7 +79,7 @@ fn process(state : &mut State, input_line : &str) {
             continue
         }
 
-        println!("No such command in dictonary: {}", part);
+        println!("{} ?", part);
     }
 
 }
