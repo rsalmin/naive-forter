@@ -2,7 +2,11 @@ use std::io;
 use std::io::prelude::*;
 
 mod state;
+mod stack;
+mod dict;
+
 use state::State;
+
 
 fn main() -> io::Result<()> {
 
@@ -31,10 +35,27 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
+fn parse_num(str : &str) -> Option<u8> {
+    str.parse::<u8>().ok()
+}
+
 fn process(state : &mut State, input_line : &str) {
 
+    // let cmds : Vec<&str> = input_line.split_whitespace().collect();
+
     for part in input_line.split_whitespace() {
-        println!("Your part: {}", part);
+
+        if let Some(&cmd) = state.dict.get(part) {
+            cmd(&mut state.stack);
+            continue;
+        }
+
+        if let Some(n) = parse_num(part) {
+            state.stack.push(n);
+            continue
+        }
+
+        println!("No such command in dictonary: {}", part);
     }
 
 }

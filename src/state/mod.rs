@@ -1,10 +1,14 @@
-#[derive(Debug)]
+use crate::stack::Stack;
+use crate::dict::Dict;
+
 pub struct State {
+    pub stack : Stack,
+    pub dict : Dict,
 }
 
 impl State {
     pub fn new() -> State {
-        State {}
+        State { stack : Stack::new(), dict : Dict::new()}
     }
 }
 
@@ -14,7 +18,7 @@ mod test {
 
     #[test]
     fn trivial() {
-        let s = State::new();
+        let _s = State::new();
     }
 
 }
