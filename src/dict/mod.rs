@@ -3,13 +3,15 @@ use crate::state::State;
 use std::iter;
 use std::rc::Rc;
 
+pub type Function = Rc<Box<dyn Fn(&mut State)>>;
+
 pub struct Dict {
-    dict : HashMap<String, Rc<Box<dyn Fn(&mut State)>>>,
+    dict : HashMap<String, Function>,
 }
 
 impl Dict {
     pub fn new() -> Dict {
-        let mut d = Dict { dict : HashMap::<String, Rc<Box<dyn Fn(&mut State)>>>::new() };
+        let mut d = Dict { dict : HashMap::<String, Function>::new() };
 
         d.insert_fn("Hi", |_s : &mut State| println!("*") );
         d.insert_fn("Bro", |_s : &mut State| println!("+++") );
@@ -19,7 +21,7 @@ impl Dict {
         d
     }
 
-    pub fn get(&self, key : &str) -> Option<Rc<Box<dyn Fn(&mut State)>>> {
+    pub fn get(&self, key : &str) -> Option<Function> {
         self.dict.get(key).map(|x| x.clone())
     }
 
@@ -27,8 +29,8 @@ impl Dict {
         self.dict.insert(String::from(key), Rc::new(Box::new(f)));
     }
 
-    pub fn insert_closure(&mut self, key : &str, f : Box<dyn Fn(&mut State)>) {
-        self.dict.insert(String::from(key), Rc::new(f));
+    pub fn insert_closure(&mut self, key : &str, f : Rc<Box<dyn Fn(&mut State)>>) {
+        self.dict.insert(String::from(key), f);
     }
 }
 

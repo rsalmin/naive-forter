@@ -1,12 +1,13 @@
 use std::io;
 use std::io::prelude::*;
 use std::str;
+use std::rc::Rc;
 
 mod state;
 mod stack;
 mod dict;
 
-use state::State;
+use state::{State, Function};
 
 macro_rules! next {
     ( $x:ident ) => {
@@ -60,11 +61,10 @@ fn interpret(state : &mut State, input_line: &str) {
         if part == ":" {
             let cmd_name = String::from( next!( iter ) );
             let cmd_body :String  = iter.by_ref().take_while(|&x| x != ";").map(|x| format!("{} ", x) ).collect::<String>();
-
-            //let cmd = move |_s : &mut State| { println!("{}", cmd_body); };
-            let cmd = move |s : &mut State| { interpret(s, &cmd_body); };
-
-            state.dict.insert_closure(&cmd_name, Box::new(cmd));
+            match compile(state, &cmd_body) {
+                Err( err ) => println!("{}", err),
+                Ok( cmd ) => state.dict.insert_closure(&cmd_name, cmd),
+            }
 
             continue;
          }
@@ -82,4 +82,35 @@ fn interpret(state : &mut State, input_line: &str) {
         println!("{} ?", part);
     }
 
+}
+
+fn compile(state : &State, input_line: &str) -> Result<Function, String> {
+
+    let mut iter = input_line.split_whitespace();
+
+    let mut code : Vec<Function> = Vec::new();
+
+    loop {
+
+        let part = next!( iter );     //break when None
+
+        if let Some(cmd) = state.dict.get(part) {
+            code.push( cmd );
+            continue;
+        }
+
+        if let Some(n) = parse_num(part) {
+            code.push( Rc::new(Box::new( move |s : &mut State| s.stack.push(n) )) );
+            continue;
+        }
+
+        return Err( format!("{} ?", part) );
+    }
+
+    let cls = move |state : &mut State| {
+        for cmd in code.iter() {
+            cmd(state);
+        }
+    };
+    Ok( Rc::new(Box::new(cls)) )
 }

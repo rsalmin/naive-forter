@@ -1,6 +1,8 @@
 use crate::stack::Stack;
 use crate::dict::Dict;
 
+pub use crate::dict::Function;
+
 pub struct State {
     pub stack : Stack,
     pub dict : Dict,
