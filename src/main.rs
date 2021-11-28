@@ -2,23 +2,14 @@ use std::io;
 use std::io::prelude::*;
 use std::str;
 use std::rc::Rc;
-use std::str::SplitWhitespace;
 
 mod state;
 mod stack;
 mod dict;
+mod input_stream;
 
 use state::{State, Function};
-
-macro_rules! next {
-    ( $x:ident ) => {
-        {
-            let v : Option<&str> = $x.next();
-            if v.is_none() { break; }
-            v.unwrap()
-        }
-    }
-}
+use input_stream::InputStream;
 
 fn main() -> io::Result<()> {
 
@@ -38,7 +29,10 @@ fn main() -> io::Result<()> {
             break;
         }
 
-        interpret(&mut state, &input_line);
+        let mut input_stream = InputStream::from(&input_line);
+        if let Err( err ) = interpret(&mut state, &mut input_stream) {
+            println!("error : {}", err);
+        }
 
         input_line.clear();
     }
@@ -51,31 +45,34 @@ fn parse_num(str : &str) -> Option<u8> {
     str.parse::<u8>().ok()
 }
 
-fn interpret(state : &mut State, input_line: &str) {
-
-    let mut input_stream = input_line.split_whitespace();
+fn interpret(state : &mut State, input_stream: &mut InputStream) -> Result<(), String> {
 
     loop {
 
-        let part = next!( input_stream);     //break when None
+        let part = input_stream.next_token();
+        if part.is_none() { return Ok(()); }
+        let part = part.unwrap();
 
         if part == ":" {
-            let cmd_name = String::from( next!( input_stream ) );
-            let cmd_body :String  = input_stream.by_ref().take_while(|&x| x != ";").map(|x| format!("{} ", x) ).collect::<String>();
-            match compile(state, &cmd_body) {
-                Err( err ) => println!("{}", err),
-                Ok( cmd ) => state.dict.insert_closure(&cmd_name, cmd),
-            }
-
+            let cmd_name =  input_stream.next_token().ok_or("token not found after :")?;
+            let cmd_body = input_stream.take_until(';').ok_or("not found ';'")?;
+            let cmd =  compile(state, &cmd_body)?;
+            state.dict.insert_closure(&cmd_name, cmd);
             continue;
          }
 
-        if let Some(cmd) = state.dict.get(part) {
-            cmd(state, &mut input_stream);
+         if part == ".\"" {
+             let text = input_stream.take_until('"').ok_or("not found '\"'")?;
+             print!("{}", text);
+             continue;
+         }
+
+        if let Some(cmd) = state.dict.get(&part) {
+            cmd(state, input_stream);
             continue;
         }
 
-        if let Some(n) = parse_num(part) {
+        if let Some(n) = parse_num(&part) {
             state.stack.push(n);
             continue
         }
@@ -87,28 +84,36 @@ fn interpret(state : &mut State, input_line: &str) {
 
 fn compile(state : &State, input_line: &str) -> Result<Function, String> {
 
-    let mut iter = input_line.split_whitespace();
+    let mut input_stream = InputStream::from(input_line);
 
     let mut code : Vec<Function> = Vec::new();
 
     loop {
 
-        let part = next!( iter );     //break when None
+        let part = input_stream.next_token();
+        if part.is_none() { break; }
+        let part = part.unwrap();
 
-        if let Some(cmd) = state.dict.get(part) {
+         if part == ".\"" {
+             let text = input_stream.take_until('"').ok_or("not found '\"'")?;
+             code.push( Rc::new(Box::new( move |s : &mut State, _i : &mut InputStream | print!("{}", text) )) );
+             continue;
+         }
+
+        if let Some(cmd) = state.dict.get(&part) {
             code.push( cmd );
             continue;
         }
 
-        if let Some(n) = parse_num(part) {
-            code.push( Rc::new(Box::new( move |s : &mut State, _i : &mut SplitWhitespace | s.stack.push(n) )) );
+        if let Some(n) = parse_num(&part) {
+            code.push( Rc::new(Box::new( move |s : &mut State, _i : &mut InputStream | s.stack.push(n) )) );
             continue;
         }
 
         return Err( format!("{} ?", part) );
     }
 
-    let cls = move |state : &mut State, input : &mut SplitWhitespace | {
+    let cls = move |state : &mut State, input : &mut InputStream | {
         for cmd in code.iter() {
             cmd(state, input);
         }
