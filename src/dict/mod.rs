@@ -14,6 +14,7 @@ impl Dict {
         let mut d = Dict { dict : HashMap::<String, Function>::new() };
 
         d.insert_fn("CR", |_s : &mut State |  { println!(); Ok(()) } );
+        d.insert_fn("SPACE", |_s : &mut State |  { print!(" "); Ok(()) } );
         d.insert_fn("SPACES", |s : &mut State |  {
             let n = s.stack.pop().ok_or("stack is empty")?;
             print!("{}", iter::repeat(' ').take(n.unsigned_abs().into()).collect::<String>() );
