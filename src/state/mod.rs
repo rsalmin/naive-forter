@@ -2,6 +2,7 @@ use crate::stack::Stack;
 use crate::dict::Dict;
 
 pub use crate::dict::Function;
+pub use crate::stack::StackType;
 
 pub struct State {
     pub stack : Stack,

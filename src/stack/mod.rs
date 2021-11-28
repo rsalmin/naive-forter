@@ -1,5 +1,8 @@
+
+pub type StackType = i16;
+
 pub struct Stack {
-    data : Vec<u8>,
+    data : Vec<StackType>,
 }
 
 impl Stack {
@@ -7,12 +10,12 @@ impl Stack {
         Stack { data : Vec::new() }
     }
 
-    pub fn push(&mut self, v : u8) {
+    pub fn push(&mut self, v : StackType) {
         self.data.push(v);
     }
 
-    pub fn pop(&mut self) -> u8 {
-        self.data.pop().expect("to much pop")
+    pub fn pop(&mut self) -> Option<StackType> {
+        self.data.pop()
     }
 }
 
@@ -25,7 +28,8 @@ mod test {
         let mut s = Stack::new();
         s.push(10);
         s.push(20);
-        assert!(20 == s.pop());
-        assert!(10 == s.pop());
+        assert!(Some(20)== s.pop());
+        assert!(Some(10) == s.pop());
+        assert!(None == s.pop());
     }
 }

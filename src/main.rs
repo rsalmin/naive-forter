@@ -8,7 +8,7 @@ mod stack;
 mod dict;
 mod input_stream;
 
-use state::{State, Function};
+use state::{State, Function, StackType};
 use input_stream::InputStream;
 
 fn main() -> io::Result<()> {
@@ -41,8 +41,8 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
-fn parse_num(str : &str) -> Option<u8> {
-    str.parse::<u8>().ok()
+fn parse_num(str : &str) -> Option<StackType> {
+    str.parse::<StackType>().ok()
 }
 
 fn interpret(state : &mut State, input_stream: &mut InputStream) -> Result<(), String> {
@@ -68,7 +68,7 @@ fn interpret(state : &mut State, input_stream: &mut InputStream) -> Result<(), S
          }
 
         if let Some(cmd) = state.dict.get(&part) {
-            cmd(state);
+            cmd(state)?;
             continue;
         }
 
@@ -96,7 +96,7 @@ fn compile(state : &State, input_line: &str) -> Result<Function, String> {
 
          if part == ".\"" {
              let text = input_stream.take_until('"').ok_or("not found '\"'")?;
-             code.push( Rc::new(Box::new( move |_s : &mut State | print!("{}", text) )) );
+             code.push( Rc::new(Box::new( move |_s : &mut State | { print!("{}", text); Ok(()) } )) );
              continue;
          }
 
@@ -106,7 +106,7 @@ fn compile(state : &State, input_line: &str) -> Result<Function, String> {
         }
 
         if let Some(n) = parse_num(&part) {
-            code.push( Rc::new(Box::new( move |s : &mut State | s.stack.push(n) )) );
+            code.push( Rc::new(Box::new( move |s : &mut State | { s.stack.push(n); Ok(()) } )) );
             continue;
         }
 
@@ -115,8 +115,9 @@ fn compile(state : &State, input_line: &str) -> Result<Function, String> {
 
     let cls = move |state : &mut State | {
         for cmd in code.iter() {
-            cmd(state);
+            cmd(state)?;
         }
+        Ok(())
     };
     Ok( Rc::new(Box::new(cls)) )
 }
