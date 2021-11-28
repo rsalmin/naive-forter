@@ -67,6 +67,11 @@ fn interpret(state : &mut State, input_stream: &mut InputStream) -> Result<(), S
              continue;
          }
 
+         if part == "(" {
+             let _ = input_stream.take_until(')').ok_or("not found )")?; // didn't care about parentheses balance
+             continue;
+        }
+
         if let Some(cmd) = state.dict.get(&part) {
             cmd(state)?;
             continue;
@@ -99,6 +104,11 @@ fn compile(state : &State, input_line: &str) -> Result<Function, String> {
              code.push( Rc::new(Box::new( move |_s : &mut State | { print!("{}", text); Ok(()) } )) );
              continue;
          }
+
+         if part == "(" {
+             let _ = input_stream.take_until(')').ok_or("not found )")?; // didn't care about parentheses balance
+             continue;
+        }
 
         if let Some(cmd) = state.dict.get(&part) {
             code.push( cmd );
