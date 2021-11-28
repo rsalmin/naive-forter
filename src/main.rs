@@ -68,7 +68,7 @@ fn interpret(state : &mut State, input_stream: &mut InputStream) -> Result<(), S
          }
 
         if let Some(cmd) = state.dict.get(&part) {
-            cmd(state, input_stream);
+            cmd(state);
             continue;
         }
 
@@ -96,7 +96,7 @@ fn compile(state : &State, input_line: &str) -> Result<Function, String> {
 
          if part == ".\"" {
              let text = input_stream.take_until('"').ok_or("not found '\"'")?;
-             code.push( Rc::new(Box::new( move |s : &mut State, _i : &mut InputStream | print!("{}", text) )) );
+             code.push( Rc::new(Box::new( move |_s : &mut State | print!("{}", text) )) );
              continue;
          }
 
@@ -106,16 +106,16 @@ fn compile(state : &State, input_line: &str) -> Result<Function, String> {
         }
 
         if let Some(n) = parse_num(&part) {
-            code.push( Rc::new(Box::new( move |s : &mut State, _i : &mut InputStream | s.stack.push(n) )) );
+            code.push( Rc::new(Box::new( move |s : &mut State | s.stack.push(n) )) );
             continue;
         }
 
         return Err( format!("{} ?", part) );
     }
 
-    let cls = move |state : &mut State, input : &mut InputStream | {
+    let cls = move |state : &mut State | {
         for cmd in code.iter() {
-            cmd(state, input);
+            cmd(state);
         }
     };
     Ok( Rc::new(Box::new(cls)) )
