@@ -1,5 +1,5 @@
 
-pub type StackType = i16;
+pub type StackType = i32;
 
 pub struct Stack {
     data : Vec<StackType>,

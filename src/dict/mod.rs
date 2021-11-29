@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 use crate::state::State;
-use std::iter;
 use std::rc::Rc;
+
+mod populate_dict;
+pub use populate_dict::populate_dict;
 
 pub type Function = Rc<Box<dyn Fn(&mut State) -> Result<(), String>>>;
 
@@ -13,30 +15,7 @@ impl Dict {
     pub fn new() -> Dict {
         let mut d = Dict { dict : HashMap::<String, Function>::new() };
 
-        d.insert_fn("CR", |_s : &mut State |  { println!(); Ok(()) } );
-        d.insert_fn("SPACE", |_s : &mut State |  { print!(" "); Ok(()) } );
-        d.insert_fn("SPACES", |s : &mut State |  {
-            let n = s.stack.pop().ok_or("stack is empty")?;
-            print!("{}", iter::repeat(' ').take(n.unsigned_abs().into()).collect::<String>() );
-            Ok(())
-        } );
-        d.insert_fn("EMIT", |s : &mut State | {
-            let c = s.stack.pop().ok_or("stack is empty")? as u8;
-            let c = c as char;
-            print!("{}", c);
-            Ok(())
-        } );
-        d.insert_fn(".", |s : &mut State | {
-            let n = s.stack.pop().ok_or("stack is empty")?;
-            println!("{}", n);
-            Ok(())
-        });
-        d.insert_fn("+", |s : &mut State | {
-            let a = s.stack.pop().ok_or("stack is emtpy")?;
-            let b = s.stack.pop().ok_or("stack is empty")?;
-            s.stack.push(a + b);
-            Ok(())
-        });
+        populate_dict(&mut d);
 
         d
     }
