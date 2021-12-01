@@ -18,7 +18,7 @@ pub fn populate_dict(d : &mut Dict) {
         } );
         d.insert_fn(".", |s : &mut State | {
             let n = s.stack.pop().ok_or("stack is empty for .")?;
-            println!("{}", n);
+            print!("{}", n);
             Ok(())
         });
         d.insert_fn("+", |s : &mut State | {
@@ -43,6 +43,19 @@ pub fn populate_dict(d : &mut Dict) {
             let b = s.stack.pop().ok_or("stack is emtpy for second arg of /")?;
             let a = s.stack.pop().ok_or("stack is empty for first arg of /")?;
             s.stack.push(a / b);
+            Ok(())
+        });
+        d.insert_fn("/MOD", |s : &mut State | {
+            let b = s.stack.pop().ok_or("stack is emtpy for second arg of /MOD")?;
+            let a = s.stack.pop().ok_or("stack is empty for first arg of /MOD")?;
+            s.stack.push(a % b);
+            s.stack.push(a / b);
+            Ok(())
+        });
+        d.insert_fn("MOD", |s : &mut State | {
+            let b = s.stack.pop().ok_or("stack is emtpy for second arg of MOD")?;
+            let a = s.stack.pop().ok_or("stack is empty for first arg of MOD")?;
+            s.stack.push(a % b);
             Ok(())
         });
 }
