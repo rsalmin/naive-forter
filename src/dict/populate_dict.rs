@@ -82,5 +82,16 @@ pub fn populate_dict(d : &mut Dict) {
             }
             Ok(())
         });
-
+        d.insert_fn("2SWAP", |s : &mut State | {
+            s.stack.two_swap().ok_or("not enough data for 2SWAP".to_string())
+        });
+        d.insert_fn("2DUP", |s : &mut State | {
+            s.stack.two_dup().ok_or("not enough data for 2DUP".to_string())
+        });
+        d.insert_fn("2OVER", |s : &mut State | {
+            s.stack.two_over().ok_or("not enough data for 2OVER".to_string())
+        });
+        d.insert_fn("2DROP", |s : &mut State | {
+            s.stack.two_drop().ok_or("not enough data for 2DROP".to_string())
+        });
 }

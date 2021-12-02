@@ -64,6 +64,53 @@ impl Stack {
     pub fn drop(&mut self) -> Option<()> {
         self.data.pop().map(|_|())
     }
+
+    pub fn two_swap(&mut self) -> Option<()> {
+        let s = self.data.len();
+        if s < 4 {
+            return None;
+        }
+        let a2 = self.data[s - 1];
+        let a1 = self.data[s - 2];
+        self.data[s - 1] = self.data[s - 3];
+        self.data[s - 2] = self.data[s - 4];
+        self.data[s - 3] = a2;
+        self.data[s - 4] = a1;
+       Some(())
+    }
+
+    pub fn two_dup(&mut self) -> Option<()> {
+        let s = self.data.len();
+        if s < 2 {
+            return None;
+        }
+        let a2 = self.data[s - 1];
+        let a1 = self.data[s - 2];
+        self.data.push(a1);
+        self.data.push(a2);
+        Some(())
+    }
+
+    pub fn two_over(&mut self) -> Option<()> {
+        let s = self.data.len();
+        if s < 4 {
+            return None;
+        }
+        let a2 = self.data[s - 3];
+        let a1 = self.data[s - 4];
+        self.data.push(a1);
+        self.data.push(a2);
+        Some(())
+    }
+
+    pub fn two_drop(&mut self) -> Option<()> {
+        let s = self.data.len();
+        if s < 2 {
+            return None;
+        }
+        let _ = self.data.pop();
+        self.data.pop().map(|_|())
+    }
 }
 
 #[cfg(test)]
@@ -146,4 +193,69 @@ mod test {
         assert!(s.drop() == Some(()));
         assert!(None == s.pop());
     }
+
+    #[test]
+    fn two_swap() {
+        let mut s = Stack::new();
+        s.push(1);
+        assert!(s.two_swap() == None);
+        s.push(2);
+        assert!(s.two_swap() == None);
+        s.push(3);
+        assert!(s.two_swap() == None);
+        s.push(4);
+        assert!(s.two_swap() == Some(()));
+        assert!(Some(2)== s.pop());
+        assert!(Some(1) == s.pop());
+        assert!(Some(4)== s.pop());
+        assert!(Some(3) == s.pop());
+        assert!(None == s.pop());
+    }
+
+    #[test]
+    fn two_dup() {
+        let mut s = Stack::new();
+        assert!(s.two_dup() == None);
+        s.push(1);
+        assert!(s.two_dup() == None);
+        s.push(2);
+        assert!(s.two_dup() == Some(()));
+        assert!(Some(2)== s.pop());
+        assert!(Some(1) == s.pop());
+        assert!(Some(2)== s.pop());
+        assert!(Some(1) == s.pop());
+        assert!(None == s.pop());
+    }
+
+    #[test]
+    fn two_over() {
+        let mut s = Stack::new();
+        s.push(1);
+        assert!(s.two_over() == None);
+        s.push(2);
+        assert!(s.two_over() == None);
+        s.push(3);
+        assert!(s.two_over() == None);
+        s.push(4);
+        assert!(s.two_over() == Some(()));
+        assert!(Some(2)== s.pop());
+        assert!(Some(1) == s.pop());
+        assert!(Some(4)== s.pop());
+        assert!(Some(3) == s.pop());
+        assert!(Some(2)== s.pop());
+        assert!(Some(1) == s.pop());
+        assert!(None == s.pop());
+    }
+
+    #[test]
+    fn two_drop() {
+        let mut s = Stack::new();
+        assert!(s.two_drop() == None);
+        s.push(1);
+        assert!(s.two_drop() == None);
+        s.push(2);
+        assert!(s.two_drop() == Some(()));
+        assert!(None == s.pop());
+    }
+
 }
