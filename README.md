@@ -5,6 +5,4 @@
 
  In Chapter 1. All works, except loop, will be implemented in Chapter 6.
 
- Now I passed Arithmetics in Chapter 2.
-
-
+ Chapter 2 completed.
