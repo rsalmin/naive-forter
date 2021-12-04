@@ -4,6 +4,7 @@ use crate::dict::Dict;
 pub use crate::dict::Function;
 pub use crate::stack::StackType;
 
+#[derive(Clone)]
 pub struct State {
     pub stack : Stack,
     pub dict : Dict,

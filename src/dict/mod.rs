@@ -7,8 +7,8 @@ pub use populate_dict::populate_dict;
 
 pub type Function = Rc<Box<dyn Fn(&mut State, &mut InputStream) -> Result<(), String>>>;
 
+#[derive(Clone)]
 pub struct Dict {
-    //dict : HashMap<String, Function>,
     dict : Vec<(String, Function)>,
 }
 
@@ -55,6 +55,8 @@ impl Dict {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::state::State;
+    use crate::input_stream::InputStream;
 
     #[test]
     fn constuct_and_populate() {
@@ -70,4 +72,23 @@ mod test {
         assert!(d.forget("SPACES").is_some());
         assert!(d.get("SPACES").is_none());
     }
+
+    #[test]
+    fn marker() {
+        let mut s = State::new();
+        s.stack.push(1);
+
+        let mut i = InputStream::from(" -mark");
+        s.dict.get("MARKER").unwrap()(&mut s, &mut i).unwrap();
+
+        s.stack.push(2);
+        assert!(s.dict.forget("SPACES").is_some());
+
+        s.dict.get("-mark").unwrap()(&mut s, &mut i).unwrap();
+
+        assert!(s.dict.get("SPACES").is_some());
+        assert!(s.stack.pop() == Some(1));
+        assert!(s.stack.pop() == None);
+    }
+
 }

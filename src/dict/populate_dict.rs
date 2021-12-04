@@ -2,6 +2,7 @@ use crate::dict::Dict;
 use crate::state::State;
 use crate::input_stream::InputStream;
 use std::iter;
+use std::rc::Rc;
 
 pub fn populate_dict(d : &mut Dict) {
         d.insert_state_fn("CR", |_s : &mut State |  { println!(); Ok(()) } );
@@ -98,5 +99,15 @@ pub fn populate_dict(d : &mut Dict) {
         d.insert_fn("FORGET", | s : &mut State, input : &mut InputStream | {
            let t = input.next_token().ok_or("no arg for FORGET")?;
            s.dict.forget(&t).ok_or(format!("no word {} in dictionary", t))
+        });
+        d.insert_fn("MARKER", | state : &mut State, input : &mut InputStream | {
+           let t = input.next_token().ok_or("no arg for MARKER")?;
+           let state_copy = state.clone();
+           let cls = move |s : &mut State, _ : &mut InputStream | {
+               *s = state_copy.clone(); //FnOnce without clone
+               Ok(())
+           };
+           state.dict.insert_closure( &t, Rc::new(Box::new( cls  ) ) );
+           Ok(())
         });
 }

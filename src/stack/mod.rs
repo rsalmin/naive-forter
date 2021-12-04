@@ -1,6 +1,7 @@
 
 pub type StackType = i32;
 
+#[derive(Clone)]
 pub struct Stack {
     data : Vec<StackType>,
 }
