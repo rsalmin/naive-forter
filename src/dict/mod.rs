@@ -92,7 +92,7 @@ mod test {
         assert!(s.dict.get("4MORE").is_some());
         s.dict.get("-mark").unwrap()(&mut s, &mut i).unwrap();
 
-        assert!(s.dict.get("4MORE").is_some());
+        assert!(s.dict.get("4MORE").is_none());
         assert!(s.stack.pop() == Some(1));
         assert!(s.stack.pop() == None);
     }
