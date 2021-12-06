@@ -44,10 +44,15 @@ impl Dict {
     }
 
     pub fn forget(&mut self, key : &str) -> Option<()> {
-        let p = self.dict.iter().rposition(|x| x.0 == key );
-        match p {
-            Some( pos ) => { let _ = self.dict.remove( pos ); Some(()) },
-            None => None,
+        loop {
+            match self.dict.pop() {
+                None => return None,
+                Some( (k, _) ) => {
+                    if k == key {
+                        return Some(());
+                    }
+                },
+            }
         }
     }
 }
@@ -57,7 +62,7 @@ mod test {
     use super::*;
     use crate::state::State;
     use crate::input_stream::InputStream;
-
+    use crate::forth::interpret;
     #[test]
     fn constuct_and_populate() {
         let d = Dict::new();
@@ -82,11 +87,12 @@ mod test {
         s.dict.get("MARKER").unwrap()(&mut s, &mut i).unwrap();
 
         s.stack.push(2);
-        assert!(s.dict.forget("SPACES").is_some());
-
+        let mut i = InputStream::from(": 4MORE 4 + ;");
+        interpret(&mut s, &mut i).unwrap();
+        assert!(s.dict.get("4MORE").is_some());
         s.dict.get("-mark").unwrap()(&mut s, &mut i).unwrap();
 
-        assert!(s.dict.get("SPACES").is_some());
+        assert!(s.dict.get("4MORE").is_some());
         assert!(s.stack.pop() == Some(1));
         assert!(s.stack.pop() == None);
     }
