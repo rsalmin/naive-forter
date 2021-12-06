@@ -1,6 +1,7 @@
 use crate::dict::Dict;
 use crate::state::State;
 use crate::input_stream::InputStream;
+use crate::forth::interpret;
 use std::iter;
 use std::rc::Rc;
 
@@ -110,4 +111,20 @@ pub fn populate_dict(d : &mut Dict) {
            state.dict.insert_closure( &t, Rc::new(Box::new( cls  ) ) );
            Ok(())
         });
+
+        d.insert_fn("INCLUDE", | state : &mut State, input : &mut InputStream | {
+           use std::fs::File;
+           use std::io::{BufReader, BufRead};
+
+           let t = input.next_token().ok_or("no arg for INCLUDE")?;
+           let file = File::open(t).map_err(|x| x.to_string())?;
+           let reader = BufReader::new(file);
+           for line in reader.lines() {
+               let str = line.map_err(|x| x.to_string())?;
+               let mut input = InputStream::from(&str);
+               interpret(state, &mut input)?;
+           }
+           Ok(())
+        });
+
 }
