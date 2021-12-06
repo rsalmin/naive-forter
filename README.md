@@ -6,3 +6,7 @@
  In Chapter 1. All works, except loop, will be implemented in Chapter 6.
 
  Chapter 2 completed.
+
+ Chapter 3 completed without IO block words, b/c it's all looks outdated. Only FORGER MARKER INCLUDE words was implemented.
+
+ 
