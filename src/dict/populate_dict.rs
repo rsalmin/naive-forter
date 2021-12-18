@@ -194,4 +194,21 @@ pub fn populate_dict(d : &mut Dict) {
             s.stack.push( r );
             Ok(())
         });
+        d.insert_state_fn("AND", |s : &mut State | {
+            let b = s.stack.pop().ok_or("stack is emtpy for second arg of AND")?;
+            let a = s.stack.pop().ok_or("stack is empty for first arg of AND")?;
+            s.stack.push( a & b );
+            Ok(())
+        });
+        d.insert_state_fn("OR", |s : &mut State | {
+            let b = s.stack.pop().ok_or("stack is emtpy for second arg of OR")?;
+            let a = s.stack.pop().ok_or("stack is empty for first arg of OR")?;
+            s.stack.push( a | b );
+            Ok(())
+        });
+        d.insert_state_fn("INVERT", |s : &mut State | {
+            let a = s.stack.pop().ok_or("stack is empty for arg of INVERT")?;
+            s.stack.push( ! a );
+            Ok(())
+        });
 }

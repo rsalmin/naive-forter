@@ -164,4 +164,49 @@ mod test {
         assert!(s.stack.pop() == Some(0));
     }
 
+    #[test]
+    fn logical_operators() {
+        let mut s = State::new();
+
+        let mut i = InputStream::from("-1 -1 AND");
+        interpret(&mut s, &mut i).unwrap();
+        assert!(s.stack.pop() == Some(-1));
+
+        let mut i = InputStream::from("-1 0 AND");
+        interpret(&mut s, &mut i).unwrap();
+        assert!(s.stack.pop() == Some(0));
+
+        let mut i = InputStream::from("0 -1 AND");
+        interpret(&mut s, &mut i).unwrap();
+        assert!(s.stack.pop() == Some(0));
+
+        let mut i = InputStream::from("0 0 AND");
+        interpret(&mut s, &mut i).unwrap();
+        assert!(s.stack.pop() == Some(0));
+
+        let mut i = InputStream::from("-1 -1 OR");
+        interpret(&mut s, &mut i).unwrap();
+        assert!(s.stack.pop() == Some(-1));
+
+        let mut i = InputStream::from("-1 0 OR");
+        interpret(&mut s, &mut i).unwrap();
+        assert!(s.stack.pop() == Some(-1));
+
+        let mut i = InputStream::from("0 -1 OR");
+        interpret(&mut s, &mut i).unwrap();
+        assert!(s.stack.pop() == Some(-1));
+
+        let mut i = InputStream::from("0 0 OR");
+        interpret(&mut s, &mut i).unwrap();
+        assert!(s.stack.pop() == Some(0));
+
+        let mut i = InputStream::from("0 INVERT");
+        interpret(&mut s, &mut i).unwrap();
+        assert!(s.stack.pop() == Some(-1));
+
+        let mut i = InputStream::from("-1 INVERT");
+        interpret(&mut s, &mut i).unwrap();
+        assert!(s.stack.pop() == Some(0));
+    }
+
 }
