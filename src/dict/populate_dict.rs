@@ -97,34 +97,55 @@ pub fn populate_dict(d : &mut Dict) {
         d.insert_state_fn("2DROP", |s : &mut State | {
             s.stack.two_drop().ok_or("not enough data for 2DROP".to_string())
         });
-        d.insert_fn("FORGET", | s : &mut State, input : &mut InputStream | {
-           let t = input.next_token().ok_or("no arg for FORGET")?;
-           s.dict.forget(&t).ok_or(format!("no word {} in dictionary", t))
-        });
-        d.insert_fn("MARKER", | state : &mut State, input : &mut InputStream | {
-           let t = input.next_token().ok_or("no arg for MARKER")?;
-           let state_copy = state.clone();
-           let cls = move |s : &mut State, _ : &mut InputStream | {
-               *s = state_copy.clone(); //FnOnce without clone
-               Ok(())
-           };
-           state.dict.insert_closure( &t, Rc::new(Box::new( cls  ) ) );
-           Ok(())
-        });
+        d.insert_closure("FORGET", Rc::new(Box::new(
+            | input : &mut InputStream | {
+                let t = input.next_token().ok_or("no arg for FORGET")?;
+                let cls = move |s : &mut State| {
+                        s.dict.forget(&t).ok_or(format!("no word {} in dictionary", t))
+                };
+                Ok(Rc::new(Box::new(cls)))
+            })));
+        d.insert_closure("MARKER", Rc::new(Box::new(
+            | input : &mut InputStream | {
+                let t = input.next_token().ok_or("no arg for MARKER")?;
+                let ret_cls  = move |state : &mut State| {
+                    let state_copy = state.clone();
+                    let cls = move |s : &mut State | {
+                        *s = state_copy.clone(); //FnOnce without clone
+                        Ok(())
+                    };
+                    state.dict.insert_ret_closure( &t, Rc::new(Box::new( cls  ) ) );
+                    Ok(())
+                };
+                Ok(Rc::new(Box::new(ret_cls)))
+           })));
 
-        d.insert_fn("INCLUDE", | state : &mut State, input : &mut InputStream | {
-           use std::fs::File;
-           use std::io::{BufReader, BufRead};
+        d.insert_closure("INCLUDE", Rc::new(Box::new(
+            | input : &mut InputStream | {
+                let t = input.next_token().ok_or("no arg for INCLUDE")?;
+                let cls = move |state: &mut State| {
+                    use std::fs::File;
+                    use std::io::{BufReader, BufRead};
 
-           let t = input.next_token().ok_or("no arg for INCLUDE")?;
-           let file = File::open(t).map_err(|x| x.to_string())?;
-           let reader = BufReader::new(file);
-           for line in reader.lines() {
-               let str = line.map_err(|x| x.to_string())?;
-               let mut input = InputStream::from(&str);
-               interpret(state, &mut input)?;
-           }
-           Ok(())
-        });
+                    let file = File::open(t.clone()).map_err(|x| x.to_string())?;
+                    let reader = BufReader::new(file);
+                    for line in reader.lines() {
+                        let str = line.map_err(|x| x.to_string())?;
+                        let mut input = InputStream::from(&str);
+                        interpret(state, &mut input)?;
+                    }
+                    Ok(())
+                };
+                Ok(Rc::new(Box::new(cls)))
+             })));
 
+        d.insert_closure(".\"", Rc::new(Box::new(
+            | input : &mut InputStream | {
+                let text = input.take_until('"').ok_or("not found '\"'")?;
+                let cls = move |_: &mut State| {
+                    print!("{}", text);
+                    Ok(())
+                };
+                Ok(Rc::new(Box::new(cls)))
+             })));
 }
