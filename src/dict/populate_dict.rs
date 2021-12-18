@@ -148,4 +148,50 @@ pub fn populate_dict(d : &mut Dict) {
                 };
                 Ok(Rc::new(Box::new(cls)))
              })));
+        d.insert_state_fn("=", |s : &mut State | {
+            let b = s.stack.pop().ok_or("stack is emtpy for second arg of =")?;
+            let a = s.stack.pop().ok_or("stack is empty for first arg of =")?;
+            let r = if a == b { -1 } else { 0 };
+            s.stack.push( r );
+            Ok(())
+        });
+        d.insert_state_fn("<>", |s : &mut State | {
+            let b = s.stack.pop().ok_or("stack is emtpy for second arg of <>")?;
+            let a = s.stack.pop().ok_or("stack is empty for first arg of <>")?;
+            let r = if a != b { -1 } else { 0 };
+            s.stack.push( r );
+            Ok(())
+        });
+        d.insert_state_fn("<", |s : &mut State | {
+            let b = s.stack.pop().ok_or("stack is emtpy for second arg of <")?;
+            let a = s.stack.pop().ok_or("stack is empty for first arg of <")?;
+            let r = if a < b { -1 } else { 0 };
+            s.stack.push( r );
+            Ok(())
+        });
+        d.insert_state_fn(">", |s : &mut State | {
+            let b = s.stack.pop().ok_or("stack is emtpy for second arg of >")?;
+            let a = s.stack.pop().ok_or("stack is empty for first arg of >")?;
+            let r = if a > b { -1 } else { 0 };
+            s.stack.push( r );
+            Ok(())
+        });
+        d.insert_state_fn("0=", |s : &mut State | {
+            let a = s.stack.pop().ok_or("no arg for 0=")?;
+            let r = if a == 0 { -1 } else { 0 };
+            s.stack.push( r );
+            Ok(())
+        });
+        d.insert_state_fn("0<", |s : &mut State | {
+            let a = s.stack.pop().ok_or("no arg for 0<")?;
+            let r = if a < 0 { -1 } else { 0 };
+            s.stack.push( r );
+            Ok(())
+        });
+        d.insert_state_fn("0>", |s : &mut State | {
+            let a = s.stack.pop().ok_or("no arg for 0>")?;
+            let r = if a > 0 { -1 } else { 0 };
+            s.stack.push( r );
+            Ok(())
+        });
 }

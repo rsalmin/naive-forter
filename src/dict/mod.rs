@@ -103,4 +103,65 @@ mod test {
         assert!(s.stack.pop() == None);
     }
 
+    #[test]
+    fn comparision() {
+        let mut s = State::new();
+
+        let mut i = InputStream::from("4 5 =");
+        interpret(&mut s, &mut i).unwrap();
+        assert!(s.stack.pop() == Some(0));
+
+        let mut i = InputStream::from("5 5 =");
+        interpret(&mut s, &mut i).unwrap();
+        assert!(s.stack.pop() == Some(-1));
+
+        let mut i = InputStream::from("4 5 <>");
+        interpret(&mut s, &mut i).unwrap();
+        assert!(s.stack.pop() == Some(-1));
+
+        let mut i = InputStream::from("5 5 <>");
+        interpret(&mut s, &mut i).unwrap();
+        assert!(s.stack.pop() == Some(0));
+
+        let mut i = InputStream::from("4 5 <");
+        interpret(&mut s, &mut i).unwrap();
+        assert!(s.stack.pop() == Some(-1));
+
+        let mut i = InputStream::from("5 5 <");
+        interpret(&mut s, &mut i).unwrap();
+        assert!(s.stack.pop() == Some(0));
+
+        let mut i = InputStream::from("4 5 >");
+        interpret(&mut s, &mut i).unwrap();
+        assert!(s.stack.pop() == Some(0));
+
+        let mut i = InputStream::from("55 5 >");
+        interpret(&mut s, &mut i).unwrap();
+        assert!(s.stack.pop() == Some(-1));
+
+        let mut i = InputStream::from("5 0=");
+        interpret(&mut s, &mut i).unwrap();
+        assert!(s.stack.pop() == Some(0));
+
+        let mut i = InputStream::from("0 0=");
+        interpret(&mut s, &mut i).unwrap();
+        assert!(s.stack.pop() == Some(-1));
+
+        let mut i = InputStream::from("5 0<");
+        interpret(&mut s, &mut i).unwrap();
+        assert!(s.stack.pop() == Some(0));
+
+        let mut i = InputStream::from("-5 0<");
+        interpret(&mut s, &mut i).unwrap();
+        assert!(s.stack.pop() == Some(-1));
+
+        let mut i = InputStream::from("5 0>");
+        interpret(&mut s, &mut i).unwrap();
+        assert!(s.stack.pop() == Some(-1));
+
+        let mut i = InputStream::from("-5 0>");
+        interpret(&mut s, &mut i).unwrap();
+        assert!(s.stack.pop() == Some(0));
+    }
+
 }
