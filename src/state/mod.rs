@@ -1,7 +1,6 @@
 use crate::stack::Stack;
-use crate::dict::Dict;
 
-pub use crate::dict::{Function, RetFunction};
+pub use crate::dict::{Dict, Function, RetFunction};
 pub use crate::stack::StackType;
 
 #[derive(Clone)]

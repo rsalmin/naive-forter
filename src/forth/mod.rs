@@ -1,4 +1,4 @@
-use crate::state::{State, RetFunction, StackType};
+use crate::state::{State, Dict, RetFunction, StackType};
 use crate::input_stream::InputStream;
 use std::str;
 use std::rc::Rc;
@@ -18,14 +18,14 @@ pub fn interpret(state : &mut State, input_stream: &mut InputStream) -> Result<(
 
         if part == ":" {
             let cmd_name =  input_stream.next_token().ok_or("token not found after :")?;
-            let cmd_body = input_stream.take_until(';').ok_or("not found ';'")?;
-            let cmd =  compile(state, &cmd_body)?;
+            let cmd_body = input_stream.take_until(";").ok_or("not found ';'")?;
+            let cmd =  compile(&state.dict, cmd_body)?;
             state.dict.insert_ret_closure(&cmd_name, cmd);
             continue;
          }
 
          if part == "(" {
-             let _ = input_stream.take_until(')').ok_or("not found )")?; // didn't care about parentheses balance
+             let _ = input_stream.take_until(")'").ok_or("not found )")?; // didn't care about parentheses balance
              continue;
         }
 
@@ -44,9 +44,7 @@ pub fn interpret(state : &mut State, input_stream: &mut InputStream) -> Result<(
 
 }
 
-pub fn compile(state : &State, input_line: &str) -> Result<RetFunction, String> {
-
-    let mut input_stream = InputStream::from(input_line);
+pub fn compile(dict : &Dict, mut input_stream: InputStream) -> Result<RetFunction, String> {
 
     let mut code : Vec<RetFunction> = Vec::new();
 
@@ -57,11 +55,11 @@ pub fn compile(state : &State, input_line: &str) -> Result<RetFunction, String> 
         let part = part.unwrap();
 
          if part == "(" {
-             let _ = input_stream.take_until(')').ok_or("not found )")?; // didn't care about parentheses balance
+             let _ = input_stream.take_until(")").ok_or("not found )")?; // didn't care about parentheses balance
              continue;
         }
 
-        if let Some(cmd) = state.dict.get(&part) {
+        if let Some(cmd) = dict.get(&part) {
             code.push( cmd(&mut input_stream)? );
             continue;
         }

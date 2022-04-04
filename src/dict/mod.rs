@@ -45,6 +45,15 @@ impl Dict {
         self.dict.push((String::from(key), Rc::new(Box::new(cls))));
     }
 
+    //pub fn insert_ret_closure2<T>(&mut self, key : &str, f : T)
+    //    where T : for<'r> Fn(&'r mut State) -> Result<(), Error> {
+    //    let f = Rc::new(Box::new(f));
+   //     let cls = move | _input : &mut InputStream | {
+    //        Ok(f.clone())
+   //     };
+   //     self.dict.push((String::from(key), Rc::new(Box::new(cls))));
+   // }
+
     pub fn insert_closure(&mut self, key : &str, f : Function) {
         self.dict.push((String::from(key), f));
     }
@@ -209,4 +218,16 @@ mod test {
         assert!(s.stack.pop() == Some(0));
     }
 
+    #[test]
+    fn if_word() {
+        let mut s = State::new();
+        let mut i = InputStream::from("10 10 = IF 15 THEN");
+        interpret(&mut s, &mut i).unwrap();
+        assert!(s.stack.pop() == Some(15));
+
+        let mut s = State::new();
+        let mut i = InputStream::from("10 11 = IF 15 THEN");
+        interpret(&mut s, &mut i).unwrap();
+        assert!(s.stack.pop() == None);
+    }
 }
