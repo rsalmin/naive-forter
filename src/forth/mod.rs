@@ -25,7 +25,7 @@ pub fn interpret(state : &mut State, input_stream: &mut InputStream) -> Result<(
          }
 
          if part == "(" {
-             let _ = input_stream.take_until(")'").ok_or("not found )")?; // didn't care about parentheses balance
+             let _ = input_stream.take_until(")").ok_or("not found )")?; // didn't care about parentheses balance
              continue;
         }
 
