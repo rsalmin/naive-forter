@@ -1,7 +1,7 @@
 use crate::dict::Dict;
 use crate::state::State;
 use crate::input_stream::InputStream;
-use crate::forth::{interpret, compile};
+use crate::forth::interpret;
 use std::iter;
 use std::rc::Rc;
 
@@ -212,20 +212,19 @@ pub fn populate_dict(d : &mut Dict) {
             Ok(())
         });
 
-//        d.insert_closure("IF", Rc::new(Box::new(
-//            | input : &mut InputStream | {
-//                let text = input.take_until_word("THEN").ok_or("not found THEN")?;
-//                let mut i = InputStream::from(&text);
-//                let if_cls = compile(&mut i)?;
-//
-//                let cls = move |s: &mut State| {
-//                    let a = s.stack.pop().ok_or("stack is empty for IF")?;
-//                    if a == -1 {
-//                        if_cls(s)?;
-//                    }
-//                    Ok(())
-//                };
-//                Ok(Rc::new(Box::new(cls)))
-//             })));
+        d.insert_closure("IF", Rc::new(Box::new(
+            | input : &mut InputStream | {
+                let if_cls_stream = input.take_until("THEN").ok_or("not found THEN")?;
+
+                let cls = move |s: &mut State| {
+                    let a = s.stack.pop().ok_or("stack is empty for IF")?;
+                    if a == -1 {
+                        let mut ics = if_cls_stream.clone();
+                        interpret(s, &mut ics)?;
+                    }
+                    Ok(())
+                };
+                Ok(Rc::new(Box::new(cls)))
+             })));
 
 }

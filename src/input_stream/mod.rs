@@ -3,6 +3,7 @@ use std::fmt;
 
 /// Input Stream for Forth
 
+#[derive(Clone)]
 pub struct InputStream {
     tokens : VecDeque<String>,
 }
