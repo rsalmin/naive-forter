@@ -1,12 +1,13 @@
 use crate::state::State;
 use crate::input_stream::InputStream;
+use crate::output::Output;
 use std::rc::Rc;
 
 mod populate_dict;
 pub use populate_dict::populate_dict;
 
 pub type Error = String;
-pub type CompiledFunction = Rc<Box<dyn Fn(&mut State) -> Result<(), Error>>>;
+pub type CompiledFunction = Rc<Box<dyn Fn(&mut State) -> Result<Output, Error>>>;
 pub type FunctionCompiler = Rc<Box<dyn Fn(&mut InputStream) -> Result<CompiledFunction, Error>>>;
 
 #[derive(Clone)]
@@ -30,7 +31,7 @@ impl Dict {
         None
     }
 
-    pub fn insert_state_fn(&mut self, key : &str, f : fn(&mut State) -> Result<(), String>) {
+    pub fn insert_state_fn(&mut self, key : &str, f : fn(&mut State) -> Result<Output, String>) {
         let rf : CompiledFunction = Rc::new(Box::new(f));
         self.dict.push((String::from(key), Rc::new(Box::new(
            move | _ : &mut InputStream| {

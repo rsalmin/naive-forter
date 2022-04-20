@@ -6,6 +6,7 @@ mod stack;
 mod dict;
 mod input_stream;
 mod forth;
+mod output;
 
 use state::State;
 use input_stream::InputStream;
@@ -52,8 +53,9 @@ fn main() -> io::Result<()> {
         }
 
         // otherwise input_stream is ready
-        if let Err( err ) = interpret(&mut state, &mut input_stream) {
-            println!("error : {}", err);
+        match interpret(&mut state, &mut input_stream) {
+            Err( err ) => println!("error : {}", err),
+            Ok( out ) =>  println!("{}", out),
         }
         is_input_finished = true;
         input_stream.clear();

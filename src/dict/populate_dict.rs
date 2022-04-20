@@ -1,107 +1,105 @@
 use crate::dict::Dict;
 use crate::state::State;
 use crate::input_stream::InputStream;
+use crate::output::Output;
 use crate::forth::interpret;
 use std::iter;
 use std::rc::Rc;
 
 pub fn populate_dict(d : &mut Dict) {
-        d.insert_state_fn("CR", |_s : &mut State |  { println!(); Ok(()) } );
-        d.insert_state_fn("SPACE", |_s : &mut State |  { print!(" "); Ok(()) } );
+        d.insert_state_fn("CR", |_s : &mut State |  { Ok(Output::from("\n")) } );
+        d.insert_state_fn("SPACE", |_s : &mut State |  { Ok(Output::from(" ")) } );
         d.insert_state_fn("SPACES", |s : &mut State |  {
             let n = s.stack.pop().ok_or("stack is empty for SPACES")?;
-            print!("{}", iter::repeat(' ').take(n.unsigned_abs() as usize).collect::<String>() );
-            Ok(())
+            Ok(Output::from(format!("{}", iter::repeat(' ').take(n.unsigned_abs() as usize).collect::<String>() ) ) )
         } );
         d.insert_state_fn("EMIT", |s : &mut State | {
             let c = s.stack.pop().ok_or("stack is empty for EMIT")? as u8;
             let c = c as char;
-            print!("{}", c);
-            Ok(())
+            Ok(Output::from( format!("{}", c) ))
         } );
         d.insert_state_fn(".", |s : &mut State | {
             let n = s.stack.pop().ok_or("stack is empty for .")?;
-            print!("{}", n);
-            Ok(())
+            Ok(Output::from( format!("{}", n) ))
         });
         d.insert_state_fn("+", |s : &mut State | {
             let b = s.stack.pop().ok_or("stack is emtpy for second arg of +")?;
             let a = s.stack.pop().ok_or("stack is empty for first arg of +")?;
             s.stack.push(a + b);
-            Ok(())
+            Ok(Output::none())
         });
         d.insert_state_fn("-", |s : &mut State | {
             let b = s.stack.pop().ok_or("stack is emtpy for second arg of -")?;
             let a = s.stack.pop().ok_or("stack is empty for first arg of -")?;
             s.stack.push(a - b);
-            Ok(())
+            Ok(Output::none())
         });
         d.insert_state_fn("*", |s : &mut State | {
             let b = s.stack.pop().ok_or("stack is emtpy for second arg of *")?;
             let a = s.stack.pop().ok_or("stack is empty for first arg of *")?;
             s.stack.push(a * b);
-            Ok(())
+            Ok(Output::none())
         });
         d.insert_state_fn("/", |s : &mut State | {
             let b = s.stack.pop().ok_or("stack is emtpy for second arg of /")?;
             let a = s.stack.pop().ok_or("stack is empty for first arg of /")?;
             s.stack.push(a / b);
-            Ok(())
+            Ok(Output::none())
         });
         d.insert_state_fn("/MOD", |s : &mut State | {
             let b = s.stack.pop().ok_or("stack is emtpy for second arg of /MOD")?;
             let a = s.stack.pop().ok_or("stack is empty for first arg of /MOD")?;
             s.stack.push(a % b);
             s.stack.push(a / b);
-            Ok(())
+            Ok(Output::none())
         });
         d.insert_state_fn("MOD", |s : &mut State | {
             let b = s.stack.pop().ok_or("stack is emtpy for second arg of MOD")?;
             let a = s.stack.pop().ok_or("stack is empty for first arg of MOD")?;
             s.stack.push(a % b);
-            Ok(())
+            Ok(Output::none())
         });
         d.insert_state_fn("SWAP", |s : &mut State | {
-            s.stack.swap().ok_or("not enough data for SWAP".to_string())
+            s.stack.swap().map(|()| Output::none()).ok_or( "not enough data for SWAP".to_string() )
         });
         d.insert_state_fn("DUP", |s : &mut State | {
-            s.stack.dup().ok_or("not enough data for DUP".to_string())
+            s.stack.dup().map(|()| Output::none()).ok_or( "not enough data for DUP".to_string() )
         });
         d.insert_state_fn("OVER", |s : &mut State | {
-            s.stack.over().ok_or("not enough data for OVER".to_string())
+            s.stack.over().map(|()| Output::none()).ok_or( "not enough data for OVER".to_string() )
         });
         d.insert_state_fn("ROT", |s : &mut State | {
-            s.stack.rot().ok_or("not enough data for ROT".to_string())
+            s.stack.rot().map(|()| Output::none()).ok_or( "not enough data for ROT".to_string() )
         });
         d.insert_state_fn("DROP", |s : &mut State | {
-            s.stack.drop().ok_or("not enough data for DROP".to_string())
+            s.stack.drop().map(|()| Output::none()).ok_or( "not enough data for DROP".to_string() )
         });
         d.insert_state_fn(".S", |s : &mut State | {
             let s = s.stack.state();
             let sz = s.len();
-            print!("<{}>", sz);
+            let mut output = Output::from(format!("<{}>", sz));
             for e in s.iter() {
-                print!(" {}", e);
+                output.append( Output::from( format!(" {}", e) ) );
             }
-            Ok(())
+            Ok(output)
         });
         d.insert_state_fn("2SWAP", |s : &mut State | {
-            s.stack.two_swap().ok_or("not enough data for 2SWAP".to_string())
+            s.stack.two_swap().map(|()| Output::none()).ok_or( "not enough data for 2SWAP".to_string() )
         });
         d.insert_state_fn("2DUP", |s : &mut State | {
-            s.stack.two_dup().ok_or("not enough data for 2DUP".to_string())
+            s.stack.two_dup().map(|()| Output::none()).ok_or( "not enough data for 2DUP".to_string() )
         });
         d.insert_state_fn("2OVER", |s : &mut State | {
-            s.stack.two_over().ok_or("not enough data for 2OVER".to_string())
+            s.stack.two_over().map(|()| Output::none()).ok_or( "not enough data for 2OVER".to_string() )
         });
         d.insert_state_fn("2DROP", |s : &mut State | {
-            s.stack.two_drop().ok_or("not enough data for 2DROP".to_string())
+            s.stack.two_drop().map(|()| Output::none()).ok_or( "not enough data for 2OVER".to_string() )
         });
         d.insert_closure("FORGET", Rc::new(Box::new(
             | input : &mut InputStream | {
                 let t = input.next_token().ok_or("no arg for FORGET")?;
                 let cls = move |s : &mut State| {
-                        s.dict.forget(&t).ok_or(format!("no word {} in dictionary", t))
+                        s.dict.forget(&t).map(|()| Output::none()).ok_or(format!("no word {} in dictionary", t))
                 };
                 Ok(Rc::new(Box::new(cls)))
             })));
@@ -112,10 +110,10 @@ pub fn populate_dict(d : &mut Dict) {
                     let state_copy = state.clone();
                     let cls = move |s : &mut State | {
                         *s = state_copy.clone(); //FnOnce without clone
-                        Ok(())
+                        Ok(Output::none())
                     };
                     state.dict.insert_ret_closure( &t, Rc::new(Box::new( cls  ) ) );
-                    Ok(())
+                    Ok(Output::none())
                 };
                 Ok(Rc::new(Box::new(ret_cls)))
            })));
@@ -129,12 +127,13 @@ pub fn populate_dict(d : &mut Dict) {
 
                     let file = File::open(t.clone()).map_err(|x| x.to_string())?;
                     let reader = BufReader::new(file);
+                    let mut output = Output::none();
                     for line in reader.lines() {
                         let str = line.map_err(|x| x.to_string())?;
                         let mut input = InputStream::from(&str);
-                        interpret(state, &mut input)?;
+                        output.append( interpret(state, &mut input)? );
                     }
-                    Ok(())
+                    Ok(output)
                 };
                 Ok(Rc::new(Box::new(cls)))
              })));
@@ -143,8 +142,7 @@ pub fn populate_dict(d : &mut Dict) {
             | input : &mut InputStream | {
                 let text = input.take_until_first("\"").ok_or("not found '\"'")?;
                 let cls = move |_: &mut State| {
-                    print!("{}", text);
-                    Ok(())
+                    Ok(Output::from( format!("{}", text) ))
                 };
                 Ok(Rc::new(Box::new(cls)))
              })));
@@ -153,65 +151,65 @@ pub fn populate_dict(d : &mut Dict) {
             let a = s.stack.pop().ok_or("stack is empty for first arg of =")?;
             let r = if a == b { -1 } else { 0 };
             s.stack.push( r );
-            Ok(())
+            Ok(Output::none())
         });
         d.insert_state_fn("<>", |s : &mut State | {
             let b = s.stack.pop().ok_or("stack is emtpy for second arg of <>")?;
             let a = s.stack.pop().ok_or("stack is empty for first arg of <>")?;
             let r = if a != b { -1 } else { 0 };
             s.stack.push( r );
-            Ok(())
+            Ok(Output::none())
         });
         d.insert_state_fn("<", |s : &mut State | {
             let b = s.stack.pop().ok_or("stack is emtpy for second arg of <")?;
             let a = s.stack.pop().ok_or("stack is empty for first arg of <")?;
             let r = if a < b { -1 } else { 0 };
             s.stack.push( r );
-            Ok(())
+            Ok(Output::none())
         });
         d.insert_state_fn(">", |s : &mut State | {
             let b = s.stack.pop().ok_or("stack is emtpy for second arg of >")?;
             let a = s.stack.pop().ok_or("stack is empty for first arg of >")?;
             let r = if a > b { -1 } else { 0 };
             s.stack.push( r );
-            Ok(())
+            Ok(Output::none())
         });
         d.insert_state_fn("0=", |s : &mut State | {
             let a = s.stack.pop().ok_or("no arg for 0=")?;
             let r = if a == 0 { -1 } else { 0 };
             s.stack.push( r );
-            Ok(())
+            Ok(Output::none())
         });
         d.insert_state_fn("0<", |s : &mut State | {
             let a = s.stack.pop().ok_or("no arg for 0<")?;
             let r = if a < 0 { -1 } else { 0 };
             s.stack.push( r );
-            Ok(())
+            Ok(Output::none())
         });
         d.insert_state_fn("0>", |s : &mut State | {
             let a = s.stack.pop().ok_or("no arg for 0>")?;
             let r = if a > 0 { -1 } else { 0 };
             s.stack.push( r );
-            Ok(())
+            Ok(Output::none())
         });
         d.insert_state_fn("AND", |s : &mut State | {
             let b = s.stack.pop().ok_or("stack is emtpy for second arg of AND")?;
             let a = s.stack.pop().ok_or("stack is empty for first arg of AND")?;
             let c = ( a != 0 ) && ( b != 0) ;
             s.stack.push( if c { -1 } else { 0 } );
-            Ok(())
+            Ok(Output::none())
         });
         d.insert_state_fn("OR", |s : &mut State | {
             let b = s.stack.pop().ok_or("stack is emtpy for second arg of OR")?;
             let a = s.stack.pop().ok_or("stack is empty for first arg of OR")?;
             let c = ( a != 0) || ( b != 0) ;
             s.stack.push( if c { -1 } else { 0 } );
-            Ok(())
+            Ok(Output::none())
         });
         d.insert_state_fn("INVERT", |s : &mut State | {
             let a = s.stack.pop().ok_or("stack is empty for arg of INVERT")?;
             s.stack.push( ! a );
-            Ok(())
+            Ok(Output::none())
         });
 
         d.insert_closure("IF", Rc::new(Box::new(
@@ -227,14 +225,16 @@ pub fn populate_dict(d : &mut Dict) {
 
                 let cls = move |s: &mut State| {
                     let a = s.stack.pop().ok_or("stack is empty for IF")?;
-                    if a != 0 {
+                    let output = if a != 0 {
                         let mut ics = true_cls_stream.clone();
-                        interpret(s, &mut ics)?;
+                        interpret(s, &mut ics)?
                     } else if false_cls_stream.is_some() {
                         let mut ics = false_cls_stream.as_ref().unwrap().clone();
-                        interpret(s, &mut ics)?;
-                    }
-                    Ok(())
+                        interpret(s, &mut ics)?
+                    } else {
+                        Output::none()
+                    };
+                    Ok(output)
                 };
                 Ok(Rc::new(Box::new(cls)))
              })));

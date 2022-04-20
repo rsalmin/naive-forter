@@ -1,5 +1,6 @@
 use crate::state::{State, Dict, CompiledFunction, StackType};
 use crate::input_stream::InputStream;
+use crate::output::Output;
 use std::str;
 use std::rc::Rc;
 
@@ -8,12 +9,14 @@ fn parse_num(str : &str) -> Option<StackType> {
     str.parse::<StackType>().ok()
 }
 
-pub fn interpret(state : &mut State, input_stream: &mut InputStream) -> Result<(), String> {
+pub fn interpret(state : &mut State, input_stream: &mut InputStream) -> Result<Output, String> {
+
+    let mut output = Output::none();
 
     loop {
 
         let part = input_stream.next_token();
-        if part.is_none() { return Ok(()); }
+        if part.is_none() { return Ok(output); }
         let part = part.unwrap();
 
         if part == ":" {
@@ -30,7 +33,7 @@ pub fn interpret(state : &mut State, input_stream: &mut InputStream) -> Result<(
         }
 
         if let Some(cmd) = state.dict.get(&part) {
-            cmd(input_stream)?(state)?;
+            output.append( cmd(input_stream)?(state)? );
             continue;
         }
 
@@ -39,7 +42,7 @@ pub fn interpret(state : &mut State, input_stream: &mut InputStream) -> Result<(
             continue
         }
 
-        println!("{} ?", part);
+        return Err(format!("{} ?", part));
     }
 
 }
@@ -65,7 +68,7 @@ pub fn compile(dict : &Dict, mut input_stream: InputStream) -> Result<CompiledFu
         }
 
         if let Some(n) = parse_num(&part) {
-            code.push( Rc::new(Box::new( move |s : &mut State | { s.stack.push(n); Ok(()) } )) );
+            code.push( Rc::new(Box::new( move |s : &mut State | { s.stack.push(n); Ok(Output::none()) } )) );
             continue;
         }
 
@@ -73,10 +76,11 @@ pub fn compile(dict : &Dict, mut input_stream: InputStream) -> Result<CompiledFu
     }
 
     let cls = move |state : &mut State | {
+        let mut output = Output::none();
         for cmd in code.iter() {
-            cmd(state)?;
+            output.append( cmd(state) ? );
         }
-        Ok(())
+        Ok(output)
     };
     Ok( Rc::new(Box::new(cls)) )
 }
