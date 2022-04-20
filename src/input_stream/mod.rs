@@ -44,6 +44,36 @@ impl InputStream {
        self.tokens.pop_front()
     }
 
+    /// check is first token equal to give one,
+    /// return true if first token is exist and it's equal to given one, otherwise returns false
+
+    pub fn is_first_token_equal(&self, word : &str) -> bool {
+       match self.tokens.get(0).as_ref() {
+           Some(&w) => w == word,
+           None => false,
+       }
+    }
+
+    /// append one InputStream to another
+
+    pub fn append(&mut self, other : InputStream)  {
+        let mut o = other;
+        self.tokens.append(&mut o.tokens);
+    }
+
+    /// clear content of InputStream
+
+    pub fn clear(&mut self)  {
+        self.tokens.clear();
+    }
+
+    /// check is given token is exists in the list of tokens
+    /// return true if the token exists, false otherwise
+
+    pub fn is_token_exists(&self, word : &str) -> bool {
+       self.tokens.iter().find(|&x| x == word).is_some()
+    }
+
     /// returns some string from current stream position till the first occurence of `word`
     /// `word` must be surrounded by spaces
     /// if end word (utf8) can't be found returns None
@@ -133,4 +163,42 @@ mod test {
         assert!(token.is_none());
     }
 
+    #[test]
+    fn is_first_token_equal() {
+        let input = InputStream::from("     : START 42 EMIT ;");
+        assert!( input.is_first_token_equal(":") );
+
+        let input = InputStream::from("START 42 EMIT ;");
+        assert!( ! input.is_first_token_equal(":") );
+
+        let input = InputStream::from("START 42 EMIT ;");
+        assert!( input.is_first_token_equal("START") );
+
+        let input = InputStream::from("");
+        assert!( ! input.is_first_token_equal("START") );
+     }
+
+    #[test]
+    fn is_token_exists() {
+        let input = InputStream::from("     : START 42 EMIT ;");
+        assert!( input.is_token_exists("EMIT") );
+        let input = InputStream::from("     : START 42 EMIT ;");
+        assert!( input.is_token_exists(";") );
+        let input = InputStream::from("     : START 42 EMIT ;");
+        assert!( input.is_token_exists(":") );
+
+        let input = InputStream::from("     : START 42 EMIT ;");
+        assert!( ! input.is_token_exists("HI") );
+   }
+
+    #[test]
+    fn append_and_clear() {
+        let mut input1 = InputStream::from("     : START 42 EMIT ");
+        let input2 = InputStream::from("42 EMIT ;");
+        input1.append(input2);
+        assert_eq!(input1, InputStream::from(" : START 42 EMIT 42 EMIT ;"));
+
+        input1.clear();
+        assert_eq!(input1, InputStream::from(""));
+   }
 }
