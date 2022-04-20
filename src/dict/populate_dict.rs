@@ -225,7 +225,7 @@ pub fn populate_dict(d : &mut Dict) {
 
                 let cls = move |s: &mut State| {
                     let a = s.stack.pop().ok_or("stack is empty for IF")?;
-                    if a == -1 {
+                    if a != 0 {
                         let mut ics = true_cls_stream.clone();
                         interpret(s, &mut ics)?;
                     } else if false_cls_stream.is_some() {
