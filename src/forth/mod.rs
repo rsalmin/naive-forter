@@ -18,14 +18,14 @@ pub fn interpret(state : &mut State, input_stream: &mut InputStream) -> Result<(
 
         if part == ":" {
             let cmd_name =  input_stream.next_token().ok_or("token not found after :")?;
-            let cmd_body = input_stream.take_until(";").ok_or("not found ';'")?;
+            let cmd_body = input_stream.take_until_first(";").ok_or("not found ';'")?;
             let cmd =  compile(&state.dict, cmd_body)?;
             state.dict.insert_ret_closure(&cmd_name, cmd);
             continue;
          }
 
          if part == "(" {
-             let _ = input_stream.take_until(")").ok_or("not found )")?; // didn't care about parentheses balance
+             let _ = input_stream.take_until_first(")").ok_or("not found )")?; // didn't care about parentheses balance
              continue;
         }
 
@@ -55,7 +55,7 @@ pub fn compile(dict : &Dict, mut input_stream: InputStream) -> Result<RetFunctio
         let part = part.unwrap();
 
          if part == "(" {
-             let _ = input_stream.take_until(")").ok_or("not found )")?; // didn't care about parentheses balance
+             let _ = input_stream.take_until_first(")").ok_or("not found )")?; // didn't care about parentheses balance
              continue;
         }
 

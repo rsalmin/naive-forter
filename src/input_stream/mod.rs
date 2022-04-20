@@ -44,14 +44,31 @@ impl InputStream {
        self.tokens.pop_front()
     }
 
-    /// returns some string from current stream position till the occurence of `word`
+    /// returns some string from current stream position till the first occurence of `word`
     /// `word` must be surrounded by spaces
     /// if end word (utf8) can't be found returns None
     /// `word` not returned and consumed
 
-    pub fn take_until(&mut self, word : &str) -> Option<InputStream> {
+    pub fn take_until_first(&mut self, word : &str) -> Option<InputStream> {
          if let Some( n ) = self.tokens.iter().position(|x| x == word) {
             let mut tokens = self.tokens.split_off(n); // keeps n elements, returns last
+            std::mem::swap(&mut self.tokens, &mut tokens);
+            self.tokens.pop_front(); // consume input word
+            let r = InputStream { tokens };
+            return Some(r);
+        }
+
+        None
+    }
+
+    /// returns some string from current stream position till the last occurence of `word`
+    /// `word` must be surrounded by spaces
+    /// if end word (utf8) can't be found returns None
+    /// `word` not returned and consumed
+
+    pub fn take_until_last(&mut self, word : &str) -> Option<InputStream> {
+         if let Some( n ) = self.tokens.iter().rev().position(|x| x == word) {
+            let mut tokens = self.tokens.split_off(self.tokens.len() - 1 - n); // keeps n elements, returns last
             std::mem::swap(&mut self.tokens, &mut tokens);
             self.tokens.pop_front(); // consume input word
             let r = InputStream { tokens };
@@ -68,18 +85,34 @@ mod test {
     use super::*;
 
     #[test]
-    fn take_until() {
+    fn take_until_first() {
         let mut input = InputStream::from(" : START 42 EMIT ; ");
-        let part = input.take_until(";");
+        let part = input.take_until_first(";");
         assert_eq!(part, Some(InputStream::from(" : START 42 EMIT ")));
-        let part = input.take_until(";");
+        let part = input.take_until_first(";");
         assert!(part.is_none());
 
         let mut input = InputStream::from(" 42 THEN");
-        let part = input.take_until("THEN");
+        let part = input.take_until_first("THEN");
         assert_eq!(part, Some(InputStream::from(" 42 ")));
 
-        let part = input.take_until("THEN");
+        let part = input.take_until_first("THEN");
+        assert!(part.is_none());
+    }
+
+    #[test]
+    fn take_until_last() {
+        let mut input = InputStream::from(" : START 42 EMIT ; ");
+        let part = input.take_until_last(";");
+        assert_eq!(part, Some(InputStream::from(" : START 42 EMIT ")));
+        let part = input.take_until_last(";");
+        assert!(part.is_none());
+
+        let mut input = InputStream::from(" 42 THEN THEN THEN");
+        let part = input.take_until_last("THEN");
+        assert_eq!(part, Some(InputStream::from(" 42 THEN THEN")));
+
+        let part = input.take_until_last("THEN");
         assert!(part.is_none());
     }
 

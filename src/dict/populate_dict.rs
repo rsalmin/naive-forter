@@ -141,7 +141,7 @@ pub fn populate_dict(d : &mut Dict) {
 
         d.insert_closure(".\"", Rc::new(Box::new(
             | input : &mut InputStream | {
-                let text = input.take_until("\"").ok_or("not found '\"'")?;
+                let text = input.take_until_first("\"").ok_or("not found '\"'")?;
                 let cls = move |_: &mut State| {
                     print!("{}", text);
                     Ok(())
@@ -214,8 +214,8 @@ pub fn populate_dict(d : &mut Dict) {
 
         d.insert_closure("IF", Rc::new(Box::new(
             | input : &mut InputStream | {
-                let else_cls_stream =  input.take_until("ELSE");
-                let then_cls_stream = input.take_until("THEN").ok_or("not found THEN")?;
+                let else_cls_stream =  input.take_until_first("ELSE");
+                let then_cls_stream = input.take_until_last("THEN").ok_or("not found THEN")?;
 
                 let (true_cls_stream, false_cls_stream) =  if else_cls_stream.is_some() {
                     (else_cls_stream.unwrap(), Some(then_cls_stream) )
