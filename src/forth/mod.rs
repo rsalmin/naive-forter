@@ -1,4 +1,4 @@
-use crate::state::{State, Dict, RetFunction, StackType};
+use crate::state::{State, Dict, CompiledFunction, StackType};
 use crate::input_stream::InputStream;
 use std::str;
 use std::rc::Rc;
@@ -44,9 +44,9 @@ pub fn interpret(state : &mut State, input_stream: &mut InputStream) -> Result<(
 
 }
 
-pub fn compile(dict : &Dict, mut input_stream: InputStream) -> Result<RetFunction, String> {
+pub fn compile(dict : &Dict, mut input_stream: InputStream) -> Result<CompiledFunction, String> {
 
-    let mut code : Vec<RetFunction> = Vec::new();
+    let mut code : Vec<CompiledFunction> = Vec::new();
 
     loop {
 

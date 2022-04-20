@@ -6,22 +6,22 @@ mod populate_dict;
 pub use populate_dict::populate_dict;
 
 pub type Error = String;
-pub type RetFunction = Rc<Box<dyn Fn(&mut State) -> Result<(), Error>>>;
-pub type Function = Rc<Box<dyn Fn(&mut InputStream) -> Result<RetFunction, Error>>>;
+pub type CompiledFunction = Rc<Box<dyn Fn(&mut State) -> Result<(), Error>>>;
+pub type FunctionCompiler = Rc<Box<dyn Fn(&mut InputStream) -> Result<CompiledFunction, Error>>>;
 
 #[derive(Clone)]
 pub struct Dict {
-    dict : Vec<(String, Function)>,
+    dict : Vec<(String, FunctionCompiler)>,
 }
 
 impl Dict {
     pub fn new() -> Dict {
-        let mut d = Dict { dict : Vec::<(String, Function)>::new() };
+        let mut d = Dict { dict : Vec::<(String, FunctionCompiler)>::new() };
         populate_dict(&mut d);
         d
     }
 
-    pub fn get(&self, key : &str) -> Option<Function> {
+    pub fn get(&self, key : &str) -> Option<FunctionCompiler> {
         for x in self.dict.iter().rev() {
             if x.0 == key {
                 return Some( x.1.clone() );
@@ -31,14 +31,14 @@ impl Dict {
     }
 
     pub fn insert_state_fn(&mut self, key : &str, f : fn(&mut State) -> Result<(), String>) {
-        let rf : RetFunction = Rc::new(Box::new(f));
+        let rf : CompiledFunction = Rc::new(Box::new(f));
         self.dict.push((String::from(key), Rc::new(Box::new(
            move | _ : &mut InputStream| {
                Ok(rf.clone())
            }))));
     }
 
-    pub fn insert_ret_closure(&mut self, key : &str, f : RetFunction) {
+    pub fn insert_ret_closure(&mut self, key : &str, f : CompiledFunction) {
         let cls = move | _input : &mut InputStream | {
             Ok(f.clone())
         };
@@ -54,7 +54,7 @@ impl Dict {
    //     self.dict.push((String::from(key), Rc::new(Box::new(cls))));
    // }
 
-    pub fn insert_closure(&mut self, key : &str, f : Function) {
+    pub fn insert_closure(&mut self, key : &str, f : FunctionCompiler) {
         self.dict.push((String::from(key), f));
     }
 
