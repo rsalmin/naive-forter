@@ -214,12 +214,22 @@ pub fn populate_dict(d : &mut Dict) {
 
         d.insert_closure("IF", Rc::new(Box::new(
             | input : &mut InputStream | {
-                let if_cls_stream = input.take_until("THEN").ok_or("not found THEN")?;
+                let else_cls_stream =  input.take_until("ELSE");
+                let then_cls_stream = input.take_until("THEN").ok_or("not found THEN")?;
+
+                let (true_cls_stream, false_cls_stream) =  if else_cls_stream.is_some() {
+                    (else_cls_stream.unwrap(), Some(then_cls_stream) )
+                } else {
+                    (then_cls_stream, else_cls_stream)
+                };
 
                 let cls = move |s: &mut State| {
                     let a = s.stack.pop().ok_or("stack is empty for IF")?;
                     if a == -1 {
-                        let mut ics = if_cls_stream.clone();
+                        let mut ics = true_cls_stream.clone();
+                        interpret(s, &mut ics)?;
+                    } else if false_cls_stream.is_some() {
+                        let mut ics = false_cls_stream.as_ref().unwrap().clone();
                         interpret(s, &mut ics)?;
                     }
                     Ok(())

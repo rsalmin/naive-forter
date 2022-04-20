@@ -219,7 +219,7 @@ mod test {
     }
 
     #[test]
-    fn if_word() {
+    fn if_then_word() {
         let mut s = State::new();
         let mut i = InputStream::from("10 10 = IF 15 THEN");
         interpret(&mut s, &mut i).unwrap();
@@ -229,5 +229,18 @@ mod test {
         let mut i = InputStream::from("10 11 = IF 15 THEN");
         interpret(&mut s, &mut i).unwrap();
         assert!(s.stack.pop() == None);
+    }
+
+    #[test]
+    fn if_else_then_word() {
+        let mut s = State::new();
+        let mut i = InputStream::from("10 10 = IF 15 ELSE 30 THEN");
+        interpret(&mut s, &mut i).unwrap();
+        assert!(s.stack.pop() == Some(15));
+
+        let mut s = State::new();
+        let mut i = InputStream::from("10 11 = IF 15 ELSE 30 THEN");
+        interpret(&mut s, &mut i).unwrap();
+        assert!(s.stack.pop() == Some(30));
     }
 }
