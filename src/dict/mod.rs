@@ -79,6 +79,14 @@ mod test {
     use crate::state::State;
     use crate::input_stream::InputStream;
     use crate::forth::interpret;
+
+    fn forth_state(str: &str) -> State {
+        let mut s = State::new();
+        let mut i = InputStream::from(str);
+        interpret(&mut s, &mut i).unwrap();
+        s
+    }
+
     #[test]
     fn constuct_and_populate() {
         let d = Dict::new();
@@ -243,5 +251,17 @@ mod test {
         let mut i = InputStream::from("10 11 = IF 15 ELSE 30 THEN");
         interpret(&mut s, &mut i).unwrap();
         assert!(s.stack.pop() == Some(30));
+    }
+
+    #[test]
+    fn dup_word() {
+        let mut s = forth_state("0 ?DUP");
+        assert_eq!(s.stack.pop(), Some(0));
+        assert_eq!(s.stack.pop(), None);
+
+        let mut s = forth_state("10 ?DUP");
+        assert_eq!(s.stack.pop(), Some(10));
+        assert_eq!(s.stack.pop(), Some(10));
+        assert_eq!(s.stack.pop(), None);
     }
 }

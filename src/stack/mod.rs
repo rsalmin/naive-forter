@@ -19,6 +19,10 @@ impl Stack {
         self.data.pop()
     }
 
+    pub fn peek(&self) -> Option<&StackType> {
+        self.data.last()
+    }
+
     pub fn state(&self) -> Vec<StackType> {
         self.data.clone()
     }
@@ -119,18 +123,21 @@ mod test {
     use super::*;
 
     #[test]
-    fn push_pop_state() {
+    fn push_pop_peek_state() {
         let mut s = Stack::new();
         s.push(10);
         s.push(20);
+        assert_eq!(s.peek(), Some(&20));
 
         let state = s.state();
-        assert!(state.len() == 2);
-        assert!(state[0] == 10);
-        assert!(state[1] == 20);
-        assert!(Some(20)== s.pop());
-        assert!(Some(10) == s.pop());
-        assert!(None == s.pop());
+        assert_eq!(state.len(), 2);
+        assert_eq!(state[0], 10);
+        assert_eq!(state[1], 20);
+        assert_eq!(Some(20), s.pop());
+        assert_eq!(s.peek(), Some(&10));
+        assert_eq!(Some(10), s.pop());
+        assert_eq!(s.peek(), None);
+        assert_eq!(None, s.pop());
     }
 
     #[test]

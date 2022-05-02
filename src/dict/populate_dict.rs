@@ -239,4 +239,16 @@ pub fn populate_dict(d : &mut Dict) {
                 Ok(Rc::new(Box::new(cls)))
              })));
 
+        d.insert_state_fn("?DUP", |s : &mut State | {
+            match s.stack.peek() {
+                Some(&v) => {
+                    if v != 0 {
+                        s.stack.dup();
+                     };
+                    Ok(Output::none())
+                },
+                None => Err( "stack is empty for ?DUP".to_string() ),
+            }
+        });
+
 }
