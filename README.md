@@ -9,4 +9,10 @@
 
  Chapter 3 completed without IO block words, b/c it's all looks outdated. Only FORGER MARKER INCLUDE words was implemented.
 
+ Chapter 4 completed.
+
  
+### Known glitches
+ 
+ Number of spaces inside quotation mark is not preserved due to tokenizer.
+
