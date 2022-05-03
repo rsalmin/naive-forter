@@ -121,14 +121,19 @@ impl Stack {
         self.data.clear();
     }
 
-    fn len(&self) -> usize {
-        self.data.len()
-    }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
+
+
+    impl Stack {
+        fn len(&self) -> usize {
+            self.data.len()
+        }
+    }
+
 
     #[test]
     fn push_pop_peek_state() {
