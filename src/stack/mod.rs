@@ -116,6 +116,14 @@ impl Stack {
         let _ = self.data.pop();
         self.data.pop().map(|_|())
     }
+
+    pub fn clear(&mut self) {
+        self.data.clear();
+    }
+
+    fn len(&self) -> usize {
+        self.data.len()
+    }
 }
 
 #[cfg(test)]
@@ -264,6 +272,17 @@ mod test {
         s.push(2);
         assert!(s.two_drop() == Some(()));
         assert!(None == s.pop());
+    }
+
+    #[test]
+    fn clear() {
+        let mut s = Stack::new();
+        for i in vec![1,2,3,4,5] {
+            s.push(i);
+        }
+        assert_eq!(s.len(), 5);
+        s.clear();
+        assert_eq!(s.len(), 0);
     }
 
 }

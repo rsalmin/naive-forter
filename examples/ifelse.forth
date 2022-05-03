@@ -17,3 +17,15 @@
     THEN THEN THEN THEN THEN DROP ;
 
 20 EGGSIZE
+
+: BOXTEST ( length width height -- )
+    6 > ROT 22 > ROT 19 > AND AND IF ." Big enough " THEN ;
+
+23 20 7 BOXTEST
+
+
+: /CHECK DUP 0= ABORT" zero denominator " / ;
+8 2 /CHECK
+.
+8 0 /CHECK
+

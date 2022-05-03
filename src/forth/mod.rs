@@ -33,7 +33,7 @@ pub fn interpret(state : &mut State, input_stream: &mut InputStream) -> Result<O
         }
 
         if let Some(cmd) = state.dict.get(&part) {
-            output.append( cmd(input_stream)?(state)? );
+            output.append( cmd(input_stream)?(state, input_stream)? );
             continue;
         }
 
@@ -68,17 +68,17 @@ pub fn compile(dict : &Dict, mut input_stream: InputStream) -> Result<CompiledFu
         }
 
         if let Some(n) = parse_num(&part) {
-            code.push( Rc::new(Box::new( move |s : &mut State | { s.stack.push(n); Ok(Output::none()) } )) );
+            code.push( Rc::new(Box::new( move |s : &mut State, _ : &mut InputStream | { s.stack.push(n); Ok(Output::none()) } )) );
             continue;
         }
 
         return Err( format!("{} ?", part) );
     }
 
-    let cls = move |state : &mut State | {
+    let cls = move |state : &mut State, input_stream :&mut InputStream | {
         let mut output = Output::none();
         for cmd in code.iter() {
-            output.append( cmd(state) ? );
+            output.append( cmd(state, input_stream) ? );
         }
         Ok(output)
     };

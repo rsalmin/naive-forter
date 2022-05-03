@@ -43,6 +43,9 @@ pub fn populate_dict(d : &mut Dict) {
         d.insert_state_fn("/", |s : &mut State | {
             let b = s.stack.pop().ok_or("stack is emtpy for second arg of /")?;
             let a = s.stack.pop().ok_or("stack is empty for first arg of /")?;
+            if b == 0 {
+                return Err(String::from("division by Zero"));
+            }
             s.stack.push(a / b);
             Ok(Output::none())
         });
@@ -98,7 +101,7 @@ pub fn populate_dict(d : &mut Dict) {
         d.insert_closure("FORGET", Rc::new(Box::new(
             | input : &mut InputStream | {
                 let t = input.next_token().ok_or("no arg for FORGET")?;
-                let cls = move |s : &mut State| {
+                let cls = move |s : &mut State, _ : &mut InputStream| {
                         s.dict.forget(&t).map(|()| Output::none()).ok_or(format!("no word {} in dictionary", t))
                 };
                 Ok(Rc::new(Box::new(cls)))
@@ -106,9 +109,9 @@ pub fn populate_dict(d : &mut Dict) {
         d.insert_closure("MARKER", Rc::new(Box::new(
             | input : &mut InputStream | {
                 let t = input.next_token().ok_or("no arg for MARKER")?;
-                let ret_cls  = move |state : &mut State| {
+                let ret_cls  = move |state : &mut State, _ : &mut InputStream| {
                     let state_copy = state.clone();
-                    let cls = move |s : &mut State | {
+                    let cls = move |s : &mut State, _ : &mut InputStream | {
                         *s = state_copy.clone(); //FnOnce without clone
                         Ok(Output::none())
                     };
@@ -121,7 +124,8 @@ pub fn populate_dict(d : &mut Dict) {
         d.insert_closure("INCLUDE", Rc::new(Box::new(
             | input : &mut InputStream | {
                 let t = input.next_token().ok_or("no arg for INCLUDE")?;
-                let cls = move |state: &mut State| {
+                //FIXME: whole INCLUDE behaves like one command, not by many in respect to InputStream!
+                let cls = move |state: &mut State, _: &mut InputStream| {
                     use std::fs::File;
                     use std::io::{BufReader, BufRead};
 
@@ -141,7 +145,7 @@ pub fn populate_dict(d : &mut Dict) {
         d.insert_closure(".\"", Rc::new(Box::new(
             | input : &mut InputStream | {
                 let text = input.take_until_first("\"").ok_or("not found '\"'")?;
-                let cls = move |_: &mut State| {
+                let cls = move |_: &mut State, _: &mut InputStream| {
                     Ok(Output::from( format!("{}", text) ))
                 };
                 Ok(Rc::new(Box::new(cls)))
@@ -223,7 +227,7 @@ pub fn populate_dict(d : &mut Dict) {
                     (then_cls_stream, else_cls_stream)
                 };
 
-                let cls = move |s: &mut State| {
+                let cls = move |s: &mut State, _: &mut InputStream| {
                     let a = s.stack.pop().ok_or("stack is empty for IF")?;
                     let output = if a != 0 {
                         let mut ics = true_cls_stream.clone();
@@ -251,4 +255,19 @@ pub fn populate_dict(d : &mut Dict) {
             }
         });
 
+        d.insert_closure("ABORT\"", Rc::new(Box::new(
+            | input : &mut InputStream | {
+                let text = input.take_until_first("\"").ok_or("not found '\"'")?;
+                let cls = move |state: &mut State, input_stream: &mut InputStream| {
+                    let v = state.stack.pop().ok_or("stack is emtpy for ABORT\"")?;
+                    if v != 0 {
+                        state.stack.clear();
+                        input_stream.clear();
+                        Ok(Output::from( format!("ABORT: {}", text) ))
+                    } else {
+                        Ok(Output::none())
+                    }
+                };
+                Ok(Rc::new(Box::new(cls)))
+          })));
 }

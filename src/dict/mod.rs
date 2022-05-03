@@ -7,7 +7,7 @@ mod populate_dict;
 pub use populate_dict::populate_dict;
 
 pub type Error = String;
-pub type CompiledFunction = Rc<Box<dyn Fn(&mut State) -> Result<Output, Error>>>;
+pub type CompiledFunction = Rc<Box<dyn Fn(&mut State, &mut InputStream) -> Result<Output, Error>>>;
 pub type FunctionCompiler = Rc<Box<dyn Fn(&mut InputStream) -> Result<CompiledFunction, Error>>>;
 
 #[derive(Clone)]
@@ -32,7 +32,8 @@ impl Dict {
     }
 
     pub fn insert_state_fn(&mut self, key : &str, f : fn(&mut State) -> Result<Output, String>) {
-        let rf : CompiledFunction = Rc::new(Box::new(f));
+        let fc = move |state : &mut State, _ : &mut InputStream| {f(state)};
+        let rf : CompiledFunction = Rc::new(Box::new(fc));
         self.dict.push((String::from(key), Rc::new(Box::new(
            move | _ : &mut InputStream| {
                Ok(rf.clone())
@@ -103,18 +104,28 @@ mod test {
     }
 
     #[test]
+    fn division() {
+        let mut s = forth_state("10 2 /");
+        assert_eq!(s.stack.pop(), Some(5));
+
+        let mut s = State::new();
+        let mut i = InputStream::from("10 0 /");
+        assert!( interpret(&mut s, &mut i).is_err() );
+    }
+
+    #[test]
     fn marker() {
         let mut s = State::new();
         s.stack.push(1);
 
         let mut i = InputStream::from(" -mark");
-        s.dict.get("MARKER").unwrap()(&mut i).unwrap()(&mut s).unwrap();
+        s.dict.get("MARKER").unwrap()(&mut i).unwrap()(&mut s, &mut i).unwrap();
 
         s.stack.push(2);
         let mut i = InputStream::from(": 4MORE 4 + ;");
         interpret(&mut s, &mut i).unwrap();
         assert!(s.dict.get("4MORE").is_some());
-        s.dict.get("-mark").unwrap()(&mut i).unwrap()(&mut s).unwrap();
+        s.dict.get("-mark").unwrap()(&mut i).unwrap()(&mut s, &mut i).unwrap();
 
         assert!(s.dict.get("4MORE").is_none());
         assert!(s.stack.pop() == Some(1));
@@ -262,6 +273,16 @@ mod test {
         let mut s = forth_state("10 ?DUP");
         assert_eq!(s.stack.pop(), Some(10));
         assert_eq!(s.stack.pop(), Some(10));
+        assert_eq!(s.stack.pop(), None);
+    }
+
+    #[test]
+    fn abort_word() {
+        let mut s = forth_state("10 2 0 ABORT\" what \" /");
+        assert_eq!(s.stack.pop(), Some(5));
+        assert_eq!(s.stack.pop(), None);
+
+        let mut s = forth_state("10 0 1 ABORT\" what \" /");
         assert_eq!(s.stack.pop(), None);
     }
 }
