@@ -61,6 +61,12 @@ impl InputStream {
         self.tokens.append(&mut o.tokens);
     }
 
+    /// preppend given InputStream
+
+    pub fn prepend(&mut self, mut other : InputStream)  {
+        other.tokens.append(&mut self.tokens);
+        self.tokens = other.tokens;
+    }
     /// clear content of InputStream
 
     pub fn clear(&mut self)  {
@@ -192,7 +198,7 @@ mod test {
    }
 
     #[test]
-    fn append_and_clear() {
+    fn append_prepend_and_clear() {
         let mut input1 = InputStream::from("     : START 42 EMIT ");
         let input2 = InputStream::from("42 EMIT ;");
         input1.append(input2);
@@ -200,5 +206,10 @@ mod test {
 
         input1.clear();
         assert_eq!(input1, InputStream::from(""));
+
+        let mut input1 = InputStream::from("     : START 42 EMIT ");
+        let input2 = InputStream::from("42 EMIT ;");
+        input1.prepend(input2);
+        assert_eq!(input1, InputStream::from("42 EMIT ; : START 42 EMIT "));
    }
 }
