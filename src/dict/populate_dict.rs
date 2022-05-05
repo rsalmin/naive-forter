@@ -270,4 +270,9 @@ pub fn populate_dict(d : &mut Dict) {
                 };
                 Ok(Rc::new(Box::new(cls)))
           })));
+        d.insert_state_fn("ABS", |s : &mut State | {
+            let a = s.stack.pop().ok_or("stack is empty for ABS")?;
+            s.stack.push( a.abs() );
+            Ok(Output::none())
+        });
 }

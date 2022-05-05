@@ -88,6 +88,17 @@ mod test {
         s
     }
 
+    fn forth_check_stack(str: &str, vv : Vec<crate::stack::StackType>)  {
+        let mut s = forth_state(str);
+        for v in vv {
+          let b = s.stack.pop();
+          assert!(b.is_some(), "expect {} but stack is empty", v);
+          let b = b.unwrap();
+          assert_eq!(v, b, "expect {} but got {} at stack", v, b);
+        }
+        assert!(s.stack.pop().is_none(), "expecting empty stack but got something");
+    }
+
     #[test]
     fn constuct_and_populate() {
         let d = Dict::new();
@@ -134,155 +145,70 @@ mod test {
 
     #[test]
     fn comparision() {
-        let mut s = State::new();
+        forth_check_stack("4 5 =", vec![0] );
+        forth_check_stack("5 5 =", vec![-1] );
 
-        let mut i = InputStream::from("4 5 =");
-        interpret(&mut s, &mut i).unwrap();
-        assert!(s.stack.pop() == Some(0));
+        forth_check_stack("4 5 <>", vec![-1] );
+        forth_check_stack("5 5 <>", vec![0] );
+        forth_check_stack("4 5 <", vec![-1] );
+        forth_check_stack("5 5 <", vec![0] );
 
-        let mut i = InputStream::from("5 5 =");
-        interpret(&mut s, &mut i).unwrap();
-        assert!(s.stack.pop() == Some(-1));
+        forth_check_stack("4 5 >", vec![0] );
+        forth_check_stack("55 5 >", vec![-1] );
 
-        let mut i = InputStream::from("4 5 <>");
-        interpret(&mut s, &mut i).unwrap();
-        assert!(s.stack.pop() == Some(-1));
+        forth_check_stack("5 0=", vec![0] );
+        forth_check_stack("0 0=", vec![-1] );
 
-        let mut i = InputStream::from("5 5 <>");
-        interpret(&mut s, &mut i).unwrap();
-        assert!(s.stack.pop() == Some(0));
-
-        let mut i = InputStream::from("4 5 <");
-        interpret(&mut s, &mut i).unwrap();
-        assert!(s.stack.pop() == Some(-1));
-
-        let mut i = InputStream::from("5 5 <");
-        interpret(&mut s, &mut i).unwrap();
-        assert!(s.stack.pop() == Some(0));
-
-        let mut i = InputStream::from("4 5 >");
-        interpret(&mut s, &mut i).unwrap();
-        assert!(s.stack.pop() == Some(0));
-
-        let mut i = InputStream::from("55 5 >");
-        interpret(&mut s, &mut i).unwrap();
-        assert!(s.stack.pop() == Some(-1));
-
-        let mut i = InputStream::from("5 0=");
-        interpret(&mut s, &mut i).unwrap();
-        assert!(s.stack.pop() == Some(0));
-
-        let mut i = InputStream::from("0 0=");
-        interpret(&mut s, &mut i).unwrap();
-        assert!(s.stack.pop() == Some(-1));
-
-        let mut i = InputStream::from("5 0<");
-        interpret(&mut s, &mut i).unwrap();
-        assert!(s.stack.pop() == Some(0));
-
-        let mut i = InputStream::from("-5 0<");
-        interpret(&mut s, &mut i).unwrap();
-        assert!(s.stack.pop() == Some(-1));
-
-        let mut i = InputStream::from("5 0>");
-        interpret(&mut s, &mut i).unwrap();
-        assert!(s.stack.pop() == Some(-1));
-
-        let mut i = InputStream::from("-5 0>");
-        interpret(&mut s, &mut i).unwrap();
-        assert!(s.stack.pop() == Some(0));
+         forth_check_stack("5 0<", vec![0]);
+         forth_check_stack("-5 0<", vec![-1]);
+         forth_check_stack("5 0>", vec![-1]);
+         forth_check_stack("-5 0>", vec![0]);
     }
 
     #[test]
     fn logical_operators() {
-        let mut s = State::new();
+        forth_check_stack("-1 -1 AND", vec![-1]);
+        forth_check_stack("-1 0 AND", vec![0]);
+        forth_check_stack("0 -1 AND", vec![0]);
+        forth_check_stack("0 0 AND", vec![0]);
 
-        let mut i = InputStream::from("-1 -1 AND");
-        interpret(&mut s, &mut i).unwrap();
-        assert!(s.stack.pop() == Some(-1));
+        forth_check_stack("-1 -1 OR", vec![-1]);
+        forth_check_stack("-1 0 OR", vec![-1]);
+        forth_check_stack("0 -1 OR", vec![-1]);
+        forth_check_stack("0 0 OR", vec![0]);
 
-        let mut i = InputStream::from("-1 0 AND");
-        interpret(&mut s, &mut i).unwrap();
-        assert!(s.stack.pop() == Some(0));
-
-        let mut i = InputStream::from("0 -1 AND");
-        interpret(&mut s, &mut i).unwrap();
-        assert!(s.stack.pop() == Some(0));
-
-        let mut i = InputStream::from("0 0 AND");
-        interpret(&mut s, &mut i).unwrap();
-        assert!(s.stack.pop() == Some(0));
-
-        let mut i = InputStream::from("-1 -1 OR");
-        interpret(&mut s, &mut i).unwrap();
-        assert!(s.stack.pop() == Some(-1));
-
-        let mut i = InputStream::from("-1 0 OR");
-        interpret(&mut s, &mut i).unwrap();
-        assert!(s.stack.pop() == Some(-1));
-
-        let mut i = InputStream::from("0 -1 OR");
-        interpret(&mut s, &mut i).unwrap();
-        assert!(s.stack.pop() == Some(-1));
-
-        let mut i = InputStream::from("0 0 OR");
-        interpret(&mut s, &mut i).unwrap();
-        assert!(s.stack.pop() == Some(0));
-
-        let mut i = InputStream::from("0 INVERT");
-        interpret(&mut s, &mut i).unwrap();
-        assert!(s.stack.pop() == Some(-1));
-
-        let mut i = InputStream::from("-1 INVERT");
-        interpret(&mut s, &mut i).unwrap();
-        assert!(s.stack.pop() == Some(0));
-    }
+        forth_check_stack("0 INVERT", vec![-1]);
+        forth_check_stack("-1 INVERT", vec![0] );
+     }
 
     #[test]
     fn if_then_word() {
-        let mut s = State::new();
-        let mut i = InputStream::from("10 10 = IF 15 THEN");
-        interpret(&mut s, &mut i).unwrap();
-        assert!(s.stack.pop() == Some(15));
-
-        let mut s = State::new();
-        let mut i = InputStream::from("10 11 = IF 15 THEN");
-        interpret(&mut s, &mut i).unwrap();
-        assert!(s.stack.pop() == None);
+        forth_check_stack("10 10 = IF 15 THEN", vec![15] );
+        forth_check_stack("10 11 = IF 15 THEN", vec![]);
     }
 
     #[test]
     fn if_else_then_word() {
-        let mut s = State::new();
-        let mut i = InputStream::from("10 10 = IF 15 ELSE 30 THEN");
-        interpret(&mut s, &mut i).unwrap();
-        assert!(s.stack.pop() == Some(15));
-
-        let mut s = State::new();
-        let mut i = InputStream::from("10 11 = IF 15 ELSE 30 THEN");
-        interpret(&mut s, &mut i).unwrap();
-        assert!(s.stack.pop() == Some(30));
+        forth_check_stack("10 10 = IF 15 ELSE 30 THEN", vec![15]);
+        forth_check_stack("10 11 = IF 15 ELSE 30 THEN", vec![30] );
     }
 
     #[test]
     fn dup_word() {
-        let mut s = forth_state("0 ?DUP");
-        assert_eq!(s.stack.pop(), Some(0));
-        assert_eq!(s.stack.pop(), None);
-
-        let mut s = forth_state("10 ?DUP");
-        assert_eq!(s.stack.pop(), Some(10));
-        assert_eq!(s.stack.pop(), Some(10));
-        assert_eq!(s.stack.pop(), None);
+        forth_check_stack("0 ?DUP", vec![0]);
+        forth_check_stack("10 ?DUP", vec![10, 10]);
     }
 
     #[test]
     fn abort_word() {
-        let mut s = forth_state("10 2 0 ABORT\" what \" /");
-        assert_eq!(s.stack.pop(), Some(5));
-        assert_eq!(s.stack.pop(), None);
+        forth_check_stack("10 2 0 ABORT\" what \" /", vec![5]);
+        forth_check_stack("10 0 1 ABORT\" what \" /", vec![]);
+    }
 
-        let mut s = forth_state("10 0 1 ABORT\" what \" /");
-        assert_eq!(s.stack.pop(), None);
+    #[test]
+    fn abs_word() {
+        forth_check_stack("-10 ABS", vec![10]);
+        forth_check_stack("10 ABS", vec![10]);
+        forth_check_stack("0 ABS", vec![0]);
     }
 }
